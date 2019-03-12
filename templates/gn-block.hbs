@@ -1,0 +1,160 @@
+<div class="p-non-exfoliate-outer-padding">
+{{#if details.ip}}
+    <div>
+      <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">(Pivot To GreyNoise Visualizer)</a>
+    </div>
+{{/if}}
+{{#if details.seen}}
+<h1 class="p-title">
+    {{fa-icon "eye" fixedWidth=true}}  Context Information
+</h1>
+{{/if}}
+{{#if details.seen}}
+    <div>
+      <span class="p-key"> Seen: </span>
+      <span class="p-value">{{details.seen}}</span>
+    </div>
+{{/if}}
+{{#if details.classification}}
+    <div>
+      <span class="p-key"> Classification: </span>
+      <span class="p-value">{{details.classification}}</span>
+    </div>
+{{/if}}
+{{#if details.first_seen}}
+    <div>
+      <span class="p-key"> First Seen: </span>
+      <span class="p-value">{{details.first_seen}}</span>
+    </div>
+{{/if}}
+{{#if details.last_seen}}
+    <div>
+      <span class="p-key"> Last Seen: </span>
+      <span class="p-value">{{details.last_seen}}</span>
+    </div>
+{{/if}}
+{{#if details.actor}}
+    <div>
+      <span class="p-key"> Actor: </span>
+      <span class="p-value">{{details.actor}}</span>
+    </div>
+{{/if}}
+
+{{#if details.tags}}
+<div class="p-title">
+    {{fa-icon "tag" fixedWidth=true}}  Tags
+</div>
+    <div class="tags">
+      {{#each  details.tags as |tag|}}
+      <span class="pulse-tag">{{tag}}</span>
+      {{/each}}
+    </div>
+  {{/if}}
+
+{{#if details.metadata}}
+<h1 class="p-title">
+    {{fa-icon "table" fixedWidth=true}}  Metadata
+</h1>
+{{/if}}
+
+{{#if details.metadata.country}}
+    <div>
+      <span class="p-key"> Country: </span>
+      <span class="p-value">{{details.metadata.country}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.country_code}}
+    <div>
+      <span class="p-key"> Country Code: </span>
+      <span class="p-value">{{details.metadata.country_code}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.city}}
+    <div>
+      <span class="p-key"> City: </span>
+      <span class="p-value">{{details.metadata.city}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.organization}}
+    <div>
+      <span class="p-key"> Organization: </span>
+      <span class="p-value">{{details.metadata.organization}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.rdns}}
+    <div>
+      <span class="p-key"> RDNS: </span>
+      <span class="p-value">{{details.metadata.rdns}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.asn}}
+    <div>
+      <span class="p-key"> ASN: </span>
+      <span class="p-value">{{details.metadata.asn}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.tor}}
+    <div>
+      <span class="p-key"> TOR Node?: </span>
+      <span class="p-value">{{details.metadata.tor}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.os}}
+    <div>
+      <span class="p-key"> Operating System: </span>
+      <span class="p-value">{{details.metadata.os}}</span>
+    </div>
+{{/if}}
+{{#if details.metadata.category}}
+    <div>
+      <span class="p-key"> Category: </span>
+      <span class="p-value">{{details.metadata.category}}</span>
+    </div>
+{{/if}}
+{{#if details.raw_data}}
+<h1 class="p-title">
+    {{fa-icon "info" fixedWidth=true}}  Raw Data
+</h1>
+{{/if}}
+
+{{#if details.raw_data.scan}}
+  {{#each details.raw_data.scan as |scan|}}
+      <div>
+          <span class="p-key">Port: </span>
+          <span class="p-value">{{scan.port}}</span>
+        </div>
+        <div>
+          <span class="p-key">Protocol: </span>
+          <span class="p-value">{{scan.protocol}}</span>
+        </div>
+  {{/each}}
+{{/if}}
+{{#if details.raw_data.web}}
+  {{#each details.raw_data.web.paths as |path|}}
+      <div>
+          <span class="p-key">Path: </span>
+          <span class="p-value">{{path}}</span>
+      </div>
+  {{/each}}
+{{/if}}
+{{#if details.raw_data.web.useragents}}
+  {{#each details.raw_data.web.useragents as |ua|}}
+      <div>
+          <span class="p-key">User Agent: </span>
+          <span class="p-value">{{ua}}</span>
+      </div>
+  {{/each}}
+{{/if}}
+{{#if details.raw_data.ja3}}
+  {{#each details.raw_data.ja3 as |ja3|}}
+      <div>
+          <span class="p-key">Port: </span>
+          <span class="p-value">{{scan.port}}</span>
+      </div>
+      <div>
+          <span class="p-key">Protocol: </span>
+          <span class="p-value">{{scan.protocol}}</span>
+      </div>
+  {{/each}}
+{{/if}}
+</div>

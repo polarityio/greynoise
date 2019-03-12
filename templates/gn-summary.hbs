@@ -1,0 +1,12 @@
+
+<span class="integration-summary-tag integration-background-color integration-border-color">
+  <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+  <span class="integration-text-color">Seen: {{details.seen}}</span>
+</span>
+
+{{#if details.classification}}
+  <span class="integration-summary-tag integration-background-color integration-border-color">
+    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+    <span class="integration-text-color">Classification: {{details.classification}}</span>
+  </span>
+{{/if}}
