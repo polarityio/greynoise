@@ -1,9 +1,12 @@
 <div class="p-non-exfoliate-outer-padding">
-{{#if details.ip}}
+{{#if (and details.seen details.ip)}}
     <div>
       <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">(Pivot To GreyNoise Visualizer)</a>
     </div>
 {{/if}}
+{{# unless details.seen}}
+  <span>IP Address has not been seen</span>
+{{/unless}}
 {{#if details.seen}}
 <h1 class="p-title">
     {{fa-icon "eye" fixedWidth=true}}  Context Information
