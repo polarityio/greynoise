@@ -1,11 +1,10 @@
 {
   "main": "./integration.js",
   "name": "GreyNoise",
-  "version": "3.0.0-beta",
+  "version": "3.0.3-beta",
   "private": true,
   "dependencies": {
-    "request": "^2.83",
-    "lodash": "^4.17",
-    "async": "^2.5"
+    "request": "^2.88.2",
+    "async": "^3.2.0"
   }
 }
