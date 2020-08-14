@@ -5,7 +5,6 @@ The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan
 
 To learn more about GreyNoise, please visit the [official website](https://greynoise.io).
 
-> Note that this integration is currently in Beta.
 
 ## GreyNoise Integration Options
 
