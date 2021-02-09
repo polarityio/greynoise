@@ -2,6 +2,7 @@
 
 const request = require('request');
 const config = require('./config/config');
+const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
 
@@ -49,77 +50,87 @@ function doLookup(entities, options, cb) {
 
   entities.forEach((entity) => {
     //do the lookup
-    let requestOptions = {
+    let noiseContextRequestOptions = {
       method: 'GET',
       uri: options.url + '/context/' + entity.value,
       headers: {
-        key: options.apiKey
+        key: options.apiKey,
+        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
       },
       json: true
     };
-
+    
     Logger.trace({ uri: options }, 'Request URI');
-
+    
     tasks.push(function(done) {
-      requestWithDefaults(requestOptions, function(httpError, res, body) {
-        Logger.trace({ body: body, statusCode: res.statusCode }, 'Result of Lookup');
+      requestWithDefaults(noiseContextRequestOptions, function(ncHttpError, ncRes, ncBody) {
+        if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
 
-        if (httpError) {
-          return done({ detail: 'Unexpected HTTP request error', httpError });
-        }
+        if (entity.isIP) {
+          let riotIpRequestOptions = {
+            method: 'GET',
+            uri: `${options.riotUrl}/${entity.value}`,
+            headers: {
+              key: options.apiKey,
+              'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+            },
+            json: true
+          };
+          requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
+            if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
 
-        let result = {};
-        let error = null;
+            processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
+              if(ncError) return done(ncError);
 
-        if (res.statusCode === 200) {
-          if (options.ignoreNonSeen && body.seen === false) {
-            // cache these as a miss
-            result = {
-              entity: entity,
-              body: null
-            };
-          } else {
-            result = {
-              entity: entity,
-              body: body
-            };
-          }
-        } else if (res.statusCode === 400) {
-          result = {
-            entity: entity,
-            body: null
-          };
-        } else if (res.statusCode === 429) {
-          error = {
-            body,
-            detail: "Too many requests.  You've hit the rate limit"
-          };
-        } else if (res.statusCode === 401) {
-          error = {
-            body,
-            detail: 'Unauthorized: Please check your API key'
-          };
+              let result, error;
+              if (rRes.statusCode === 200) {
+                if (!rBody.riot) {
+                  // cache these as a miss
+                  result = ncResult;
+                } else {
+                  result = {
+                    ...ncResult,
+                    riotBody: rBody
+                  };
+                }
+              } else if ([400, 404].includes(rRes.statusCode)) {
+                result = ncResult;
+              } else if (rRes.statusCode === 429) {
+                error = {
+                  ...ncResult,
+                  riotBody: rBody,
+                  detail: "Too many requests.  You've hit the rate limit"
+                };
+              } else if (rRes.statusCode === 401) {
+                error = {
+                  ...ncResult,
+                  riotBody: rBody,
+                  detail: 'Unauthorized: Please check your API key'
+                };
+              } else {
+                // unexpected response received
+                error = {
+                  ...ncResult,
+                  riotBody: rBody,
+                  detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
+                };
+              }
+
+              done(error, result)
+            });
+          });
         } else {
-          // unexpected response received
-          error = {
-            body,
-            detail: `Unexpected HTTP status code [${res.statusCode}] received`
-          };
+          processNoiseContextRequestResult(entity, opitons, ncRes, ncBody, done);
         }
-
-        done(error, result);
       });
     });
   });
 
   async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-    if (err) {
-      cb(err);
-      return;
-    }
+    if (err) return cb(err);
 
     results.forEach((result) => {
-      if (result.body === null || (Array.isArray(result.body) && result.body.length === 0)) {
+      if ((result.body === null || (Array.isArray(result.body) && result.body.length === 0)) && !(result.riotBody && result.riotBody.riot)) {
         lookupResults.push({
           entity: result.entity,
           data: null
@@ -129,7 +140,7 @@ function doLookup(entities, options, cb) {
           entity: result.entity,
           data: {
             summary: [],
-            details: result.body
+            details: { ...result.body, ...result.riotBody }
           }
         });
       }
@@ -139,6 +150,48 @@ function doLookup(entities, options, cb) {
   });
 }
 
+const processNoiseContextRequestResult = (entity, options, res, body, done) => {
+  let result = {};
+  let error = null;
+
+  if (res.statusCode === 200) {
+    if (options.ignoreNonSeen && body.seen === false) {
+      // cache these as a miss
+      result = {
+        entity: entity,
+        body: null
+      };
+    } else {
+      result = {
+        entity: entity,
+        body: body
+      };
+    }
+  } else if (res.statusCode === 400) {
+    result = {
+      entity: entity,
+      body: null
+    };
+  } else if (res.statusCode === 429) {
+    error = {
+      body,
+      detail: "Too many requests.  You've hit the rate limit"
+    };
+  } else if (res.statusCode === 401) {
+    error = {
+      body,
+      detail: 'Unauthorized: Please check your API key'
+    };
+  } else {
+    // unexpected response received
+    error = {
+      body,
+      detail: `Unexpected HTTP status code [${res.statusCode}] received`
+    };
+  }
+
+  done(error, result);
+}
 function validateOptions(userOptions, cb) {
   let errors = [];
   if (

@@ -99,6 +99,15 @@ module.exports = {
       adminOnly: true
     },
     {
+      key: 'riotUrl',
+      name: 'GreyNoise Riot IP URL',
+      description: 'The URL path to the GreyNoise API',
+      default: 'https://enterprise.api.greynoise.io/v2/riot',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
       key: 'apiKey',
       name: 'API Key',
       description: 'GreyNoise API Key',
