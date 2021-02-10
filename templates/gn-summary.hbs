@@ -21,8 +21,8 @@
     <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
     <span class="integration-text-color">
       {{tag}}
-      {{#if (and moreThan3Tags (eq (sub additionalTags.length 1) index))}}
-        {{fa-icon "plus" class="open-modal-btn-icon" fixedWidth=true}}
+      {{#if (and moreThan1Tags (eq (sub additionalTags.length 1) index))}}
+        +...
       {{/if}}
     </span>
   </span>

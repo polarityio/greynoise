@@ -43,9 +43,14 @@
     </div>
   {{/if}}
   {{#if (and details.cve details.cve.length)}}
-    {{#each details.cve as |cve index|}}
-      {{cve}}{{#if (not (eq (sub details.cve.length 1) index))}}, {{/if}}
-    {{/each}}
+    <div>
+      <span class="p-key"> CVEs: </span>
+      <span class="p-value">
+        {{#each details.cve as |cve index|}}
+          {{cve}}{{#if (not (eq (sub details.cve.length 1) index))}}, {{/if}}
+        {{/each}}
+      </span>
+    </div>
   {{/if}}
   
   {{#if details.riot}}

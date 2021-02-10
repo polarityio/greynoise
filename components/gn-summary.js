@@ -6,8 +6,8 @@ polarity.export = PolarityComponent.extend({
   torExitNode: false,
   init() {
     if (this.get('details').seen) {
-      this.set('moreThan3Tags', this.get('tags').length > 3);
-      this.set('additionalTags', this.get('tags') ? this.get('tags').slice(0, 3) : []);
+      this.set('moreThan1Tags', this.get('tags').length > 1);
+      this.set('additionalTags', this.get('tags') ? this.get('tags').slice(0, 1) : []);
       this.set('torExitNode', this.get('details').metadata.tor);
     }
 
