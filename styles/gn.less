@@ -43,3 +43,22 @@ pre{
     font-size: 9px;
   }
 }
+
+.expandable-title {
+  display: block;
+  color:  #5CCD18 !important;
+  font-weight: 600;
+  margin-bottom: 5px;
+  & + .expandable-title {
+    margin-top: 10px;
+  }
+
+  .text {
+    color:  #5CCD18 !important;
+    border-bottom: 1px solid #5CCD18;
+    .desc {
+      color:  black !important;
+      font-weight: 400 !important;
+    }
+  }
+}

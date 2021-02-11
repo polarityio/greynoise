@@ -4,7 +4,7 @@
       <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">(Pivot To GreyNoise Visualizer)</a>
     </div>
   {{/if}}
-  {{#unless (or details.seen details.riot)}}
+  {{#unless (or details.seen details.riot details.data)}}
     <span>IP Address has not been seen</span>
   {{/unless}}
   {{#if details.seen}}
@@ -224,5 +224,267 @@
         {{/each}}
       {{/if}}
     {{/if}}
+  {{/if}}
+
+
+  {{#if details.stats}}
+    <div>
+      <a href="https://viz.greynoise.io/query/?gnql=cve%3A{{block.entity.value}}" class="p-link">Pivot to GreyNoise</a>
+    </div>
+
+    {{#if (and details.stats.countries details.stats.countries.length)}}
+      <h1 class="p-title">
+        {{fa-icon "globe" fixedWidth=true}} Countries
+      </h1>
+      {{#each details.stats.countries as |country|}}
+        <div>
+          <span class="p-key">{{country.country}}: </span>
+          <span class="p-value">{{country.count}}</span>
+        </div>
+      {{/each}}
+    {{/if}}
+
+    {{#if (and details.stats.classifications details.stats.classifications.length)}}
+      <h1 class="p-title">
+        {{fa-icon "puzzle-piece" fixedWidth=true}} Classifications
+      </h1>
+      {{#each details.stats.classifications as |classification|}}
+        <div>
+          <span class="p-key">{{capitalize classification.classification}}: </span>
+          <span class="p-value">{{classification.count}}</span>
+        </div>
+      {{/each}}
+    {{/if}}
+
+    {{#if (and details.stats.spoofable details.stats.spoofable.length)}}
+      <h1 class="p-title">
+        {{fa-icon "user-secret" fixedWidth=true}} Spoofable
+      </h1>
+      {{#each details.stats.spoofable as |spoofable|}}
+        <div>
+          <span class="p-key">{{if spoofable.spoofable "True" "False"}}: </span>
+          <span class="p-value">{{spoofable.count}}</span>
+        </div>
+      {{/each}}
+    {{/if}}
+
+    {{#if (and details.stats.tags details.stats.tags.length)}}
+      <h1 class="p-title">
+        {{fa-icon "tag" fixedWidth=true}} Tags
+      </h1>
+      {{#each details.stats.tags as |tag|}}
+        <div>
+          <span class="p-key">{{tag.tag}}: </span>
+          <span class="p-value">{{tag.count}}</span>
+        </div>
+      {{/each}}
+    {{/if}}
+    
+    {{#if (and details.stats.operating_systems details.stats.operating_systems.length)}}
+      <h1 class="p-title">
+        {{fa-icon "cog" fixedWidth=true}} Operating Systems
+      </h1>
+      {{#each details.stats.operating_systems as |operating_system|}}
+        <div>
+          <span class="p-key">{{operating_system.operating_system}}: </span>
+          <span class="p-value">{{operating_system.count}}</span>
+        </div>
+      {{/each}}
+    {{/if}}
+  {{/if}}
+
+  {{#if (and details.data details.data.length)}}
+    <h1 class="p-title">
+      {{fa-icon "eye" fixedWidth=true}}  IPs
+    </h1>
+  {{/if}}
+  {{#each details.data as |detail index|}}
+    {{#if (get expandableTitleStates index)}}
+      <a
+        href="#"
+        class="expandable-title"
+        {{on "click" (action "toggleExpandableTitle" index)}}
+      >
+        <span class="text"><span class="desc">IP:</span> {{detail.ip}}</span> {{fa-icon "angle-up"}}
+      </a>
+    
+      {{#if (and detail.seen detail.ip)}}
+        <div>
+          <a href="https://viz.greynoise.io/ip/{{detail.ip}}" class="p-link">(Pivot To GreyNoise Visualizer)</a>
+        </div>
+      {{/if}}
+      {{#if detail.seen}}
+        <h1 class="p-title">
+          {{fa-icon "eye" fixedWidth=true}}  Context Information
+        </h1>
+      {{/if}}
+      {{#if detail.seen}}
+        <div>
+          <span class="p-key"> Seen: </span>
+          <span class="p-value">{{detail.seen}}</span>
+        </div>
+      {{/if}}
+      {{#if (and detail.classification (not (eq detail.classification "unknown")))}}
+        <div>
+          <span class="p-key"> Classification: </span>
+          <span class="p-value">{{detail.classification}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.first_seen}}
+        <div>
+          <span class="p-key"> First Seen: </span>
+          <span class="p-value">{{detail.first_seen}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.last_seen}}
+        <div>
+          <span class="p-key"> Last Seen: </span>
+          <span class="p-value">{{detail.last_seen}}</span>
+        </div>
+      {{/if}}
+      {{#if (and detail.actor (not (eq detail.actor "unknown")))}}
+        <div>
+          <span class="p-key"> Actor: </span>
+          <span class="p-value">{{detail.actor}}</span>
+        </div>
+      {{/if}}
+      {{#if (and detail.cve detail.cve.length)}}
+        <div>
+          <span class="p-key"> CVEs: </span>
+          <span class="p-value">
+            {{#each detail.cve as |cve index|}}
+              {{cve}}{{#if (not (eq (sub detail.cve.length 1) index))}}, {{/if}}
+            {{/each}}
+          </span>
+        </div>
+      {{/if}}
+      
+      {{#if detail.tags}}
+        <div class="p-title">
+          {{fa-icon "tag" fixedWidth=true}}  Tags
+        </div>
+        <div class="tags">
+          {{#each detail.tags as |tag|}}
+            <span class="pulse-tag">{{tag}}</span>
+          {{/each}}
+        </div>
+      {{/if}}
+
+      {{#if detail.metadata}}
+        <h1 class="p-title">
+          {{fa-icon "table" fixedWidth=true}}  Metadata
+        </h1>
+      {{/if}}
+
+      {{#if detail.metadata.country}}
+        <div>
+          <span class="p-key"> Country: </span>
+          <span class="p-value">{{detail.metadata.country}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.country_code}}
+        <div>
+          <span class="p-key"> Country Code: </span>
+          <span class="p-value">{{detail.metadata.country_code}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.city}}
+        <div>
+          <span class="p-key"> City: </span>
+          <span class="p-value">{{detail.metadata.city}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.organization}}
+        <div>
+          <span class="p-key"> Organization: </span>
+          <span class="p-value">{{detail.metadata.organization}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.rdns}}
+        <div>
+          <span class="p-key"> RDNS: </span>
+          <span class="p-value">{{detail.metadata.rdns}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.asn}}
+        <div>
+          <span class="p-key"> ASN: </span>
+          <span class="p-value">{{detail.metadata.asn}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.tor}}
+        <div>
+          <span class="p-key"> TOR Node?: </span>
+          <span class="p-value">{{detail.metadata.tor}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.os}}
+        <div>
+          <span class="p-key"> Operating System: </span>
+          <span class="p-value">{{detail.metadata.os}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.category}}
+        <div>
+          <span class="p-key"> Category: </span>
+          <span class="p-value">{{detail.metadata.category}}</span>
+        </div>
+      {{/if}}
+
+      {{#if detail.raw_data}}
+        <h1 class="p-title">
+          {{fa-icon "info" fixedWidth=true}}  Raw Data
+        </h1>
+        {{#if detail.raw_data.scan}}
+          {{#each detail.raw_data.scan as |scan|}}
+            {{#if (and scan.port scan.protocol)}}
+              <div>
+                <span class="p-key">Port / Protocol: </span>
+                <span class="p-value">{{scan.port}} / {{scan.protocol}}</span>
+              </div>
+            {{/if}}
+          {{/each}}
+        {{/if}}
+        {{#if detail.raw_data.web}}
+          {{#each detail.raw_data.web.paths as |path|}}
+            <div>
+              <span class="p-key">Path: </span>
+              <span class="p-value">{{path}}</span>
+            </div>
+          {{/each}}
+        {{/if}}
+        {{#if detail.raw_data.web.useragents}}
+          {{#each detail.raw_data.web.useragents as |ua|}}
+            <div>
+              <span class="p-key">User Agent: </span>
+              <span class="p-value">{{ua}}</span>
+            </div>
+          {{/each}}
+        {{/if}}
+        {{#if detail.raw_data.ja3}}
+          {{#each detail.raw_data.ja3 as |ja3|}}
+            {{#if (and ja3.fingerprint ja3.port)}}
+              <div>
+                <span class="p-key">Fingerprint / Port: </span>
+                <span class="p-value">{{ja3.fingerprint}} / {{ja3.port}}</span>
+              </div>
+            {{/if}}
+          {{/each}}
+        {{/if}}
+      {{/if}}
+    {{else}}
+      <a
+        href="#"
+        class="expandable-title"
+        {{on "click" (action "toggleExpandableTitle" index)}}
+      >
+        <span class="text">{{detail.ip}}</span> {{fa-icon "angle-down"}}
+      </a>
+    {{/if}}
+  {{/each}}
+  {{#if (eq details.data.length 10)}}
+    <div style="margin-top: 10px;">
+      <a href="https://viz.greynoise.io/query/?gnql=cve%3A{{block.entity.value}}" class="p-link">... See Remainder in GreyNoise</a>
+    </div>
   {{/if}}
 </div>

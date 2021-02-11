@@ -46,83 +46,20 @@ function doLookup(entities, options, cb) {
   let lookupResults = [];
   let tasks = [];
 
-  Logger.debug(entities);
+  Logger.trace({ entities });
 
   entities.forEach((entity) => {
-    //do the lookup
-    let noiseContextRequestOptions = {
-      method: 'GET',
-      uri: options.url + '/context/' + entity.value,
-      headers: {
-        key: options.apiKey,
-        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-      },
-      json: true
-    };
-    
     Logger.trace({ uri: options }, 'Request URI');
     
     tasks.push(function(done) {
-      requestWithDefaults(noiseContextRequestOptions, function(ncHttpError, ncRes, ncBody) {
-        if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
-
-        if (entity.isIP) {
-          let riotIpRequestOptions = {
-            method: 'GET',
-            uri: `${options.riotUrl}/${entity.value}`,
-            headers: {
-              key: options.apiKey,
-              'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-            },
-            json: true
-          };
-          requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
-            if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
-
-            processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
-              if(ncError) return done(ncError);
-
-              let result, error;
-              if (rRes.statusCode === 200) {
-                if (!rBody.riot) {
-                  // cache these as a miss
-                  result = ncResult;
-                } else {
-                  result = {
-                    ...ncResult,
-                    riotBody: rBody
-                  };
-                }
-              } else if ([400, 404].includes(rRes.statusCode)) {
-                result = ncResult;
-              } else if (rRes.statusCode === 429) {
-                error = {
-                  ...ncResult,
-                  riotBody: rBody,
-                  detail: "Too many requests.  You've hit the rate limit"
-                };
-              } else if (rRes.statusCode === 401) {
-                error = {
-                  ...ncResult,
-                  riotBody: rBody,
-                  detail: 'Unauthorized: Please check your API key'
-                };
-              } else {
-                // unexpected response received
-                error = {
-                  ...ncResult,
-                  riotBody: rBody,
-                  detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
-                };
-              }
-
-              done(error, result)
-            });
-          });
-        } else {
-          processNoiseContextRequestResult(entity, opitons, ncRes, ncBody, done);
-        }
-      });
+      if(entity.isIP) {
+        getIpData(entity, options, done);
+        
+      } else if (entity.type === 'cve') {
+        getCveData(entity, options, done)
+      } else {
+        done({err: 'Unsupported entity type'})
+      }
     });
   });
 
@@ -130,7 +67,11 @@ function doLookup(entities, options, cb) {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      if ((result.body === null || (Array.isArray(result.body) && result.body.length === 0)) && !(result.riotBody && result.riotBody.riot)) {
+      if (
+        (result.body === null || (Array.isArray(result.body) && result.body.length === 0)) &&
+        !(result.riotBody && result.riotBody.riot) &&
+        !(result.statBody && result.statBody.count > 0)
+      ) {
         lookupResults.push({
           entity: result.entity,
           data: null
@@ -140,7 +81,7 @@ function doLookup(entities, options, cb) {
           entity: result.entity,
           data: {
             summary: [],
-            details: { ...result.body, ...result.riotBody }
+            details: { ...result.body, ...result.riotBody, ...result.statBody }
           }
         });
       }
@@ -149,6 +90,76 @@ function doLookup(entities, options, cb) {
     cb(null, lookupResults);
   });
 }
+
+const getIpData = (entity, options, done) => {
+  let noiseContextRequestOptions = {
+    method: 'GET',
+    uri: options.url + '/noise/context/' + entity.value,
+    headers: {
+      key: options.apiKey,
+      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+    },
+    json: true
+  };
+  requestWithDefaults(noiseContextRequestOptions, function (ncHttpError, ncRes, ncBody) {
+    if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
+
+    let riotIpRequestOptions = {
+      method: 'GET',
+      uri: `${options.url}/riot/${entity.value}`,
+      headers: {
+        key: options.apiKey,
+        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+      },
+      json: true
+    };
+    requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
+      if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
+
+      processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
+        if (ncError) return done(ncError);
+
+        let result, error;
+        if (rRes.statusCode === 200) {
+          if (!rBody.riot) {
+            // cache these as a miss
+            result = ncResult;
+          } else {
+            result = {
+              ...ncResult,
+              riotBody: rBody
+            };
+          }
+        } else if ([400, 404].includes(rRes.statusCode)) {
+          result = ncResult;
+        } else if (rRes.statusCode === 429) {
+          error = {
+            ...ncResult,
+            riotBody: rBody,
+            detail: "Too many requests.  You've hit the rate limit"
+          };
+        } else if (rRes.statusCode === 401) {
+          error = {
+            ...ncResult,
+            riotBody: rBody,
+            detail: 'Unauthorized: Please check your API key'
+          };
+        } else {
+          // unexpected response received
+          error = {
+            ...ncResult,
+            riotBody: rBody,
+            detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
+          };
+        }
+
+        done(error, result);
+      });
+    });
+  });
+};
+
+
 
 const processNoiseContextRequestResult = (entity, options, res, body, done) => {
   let result = {};
@@ -192,6 +203,114 @@ const processNoiseContextRequestResult = (entity, options, res, body, done) => {
 
   done(error, result);
 }
+
+const getCveData = (entity, options, done) => {
+  const gnqlRequestOptions = {
+    method: 'GET',
+    uri: `${options.url}/experimental/gnql`,
+    qs: {
+      size: 10,
+      query: `cve:${entity.value}`
+    },
+    headers: {
+      key: options.apiKey,
+      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+    },
+    json: true
+  };
+  requestWithDefaults(gnqlRequestOptions, function (httpError, res, body) {
+    if (httpError) return done({ detail: 'Unexpected GNQL Query HTTP request error', httpError });
+
+    const gnqlStatsRequestOptions = {
+      method: 'GET',
+      uri: `${options.url}/experimental/gnql/stats`,
+      qs: {
+        count: 3,
+        query: `cve:${entity.value}`
+      },
+      headers: {
+        key: options.apiKey,
+        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+      },
+      json: true
+    };
+    requestWithDefaults(gnqlStatsRequestOptions, function (shttpError, sRes, sBody) {
+      if (shttpError) return done({ detail: 'Unexpected GNQL Stats Query HTTP request error', shttpError });
+      
+      processGnqlRequestResult(entity, options, res, body, (error, gnqlResult) => {
+        if (error) return done(error);
+        processGnqlStatsRequestResults(options, sRes, sBody, gnqlResult, done);
+      });
+    });
+  });
+};
+
+const processGnqlRequestResult = (entity, options, res, body, done) => {
+  let result = {};
+  let error = null;
+
+  if (res.statusCode === 200) {
+    if (options.ignoreNonSeen && body.count === 0) {
+      result = { entity, body: null };
+    } else {
+      result = { entity, body };
+    }
+  } else if (res.statusCode === 400) {
+    result = { entity, body: null };
+  } else if (res.statusCode === 429) {
+    error = {
+      body,
+      detail: "Too many requests.  You've hit the rate limit"
+    };
+  } else if (res.statusCode === 401) {
+    error = {
+      body,
+      detail: 'Unauthorized: Please check your API key'
+    };
+  } else {
+    // unexpected response received
+    error = {
+      body,
+      detail: `Unexpected HTTP status code [${res.statusCode}] received`
+    };
+  }
+
+  done(error, result);
+};
+
+const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done) => {
+  let result = {};
+  let error = null;
+
+  if (res.statusCode === 200) {
+    if (options.ignoreNonSeen && statBody.count === 0) {
+      result = { ...gnqlResult };
+    } else {
+      result = { ...gnqlResult, statBody };
+    }
+  } else if (res.statusCode === 400) {
+    result = { ...gnqlResult };
+  } else if (res.statusCode === 429) {
+    error = {
+      statBody,
+      detail: "Too many requests.  You've hit the rate limit"
+    };
+  } else if (res.statusCode === 401) {
+    error = {
+      statBody,
+      detail: 'Unauthorized: Please check your API key'
+    };
+  } else {
+    // unexpected response received
+    error = {
+      statBody,
+      detail: `Unexpected HTTP status code [${res.statusCode}] received`
+    };
+  }
+
+  done(error, result);
+};
+
 function validateOptions(userOptions, cb) {
   let errors = [];
   if (

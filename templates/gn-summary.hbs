@@ -20,10 +20,64 @@
   <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
     <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
     <span class="integration-text-color">
+      {{fa-icon "tag" fixedWidth=true}}
       {{tag}}
       {{#if (and moreThan1Tags (eq (sub additionalTags.length 1) index))}}
-        +...
+        ...
       {{/if}}
     </span>
   </span>
 {{/each}}
+
+{{#if details.stats}}
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+    <span class="integration-text-color"># of IPs: {{details.count}}</span>
+  </span>
+  {{#if (and details.stats.countries details.stats.countries.length)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">
+        Top Country: 
+        {{details.stats.countries.0.country}}
+        ({{details.stats.countries.0.count}})
+      </span>
+    </span>
+  {{/if}}
+  {{#if (and details.stats.classifications details.stats.classifications.length)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">
+        Malicious: 
+        {{#each details.stats.spoofable as |classification|}}
+          {{#if (eq classification.classification "malicious")}}
+            {{classification.count}}
+          {{/if}}
+        {{/each}}
+      </span>
+    </span>
+  {{/if}}
+  {{#if (and details.stats.classifications details.stats.classifications.length)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">
+        Spoofable: 
+        {{#each details.stats.spoofable as |spoofable|}}
+          {{#if spoofable.spoofable}}
+            {{spoofable.count}}
+          {{/if}}
+        {{/each}}
+      </span>
+    </span>
+  {{/if}}
+  {{#if (and details.stats.classifications details.stats.classifications.length)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">
+        Top Tag: 
+        [{{details.stats.tags.0.tag}}]
+        ({{details.stats.tags.0.count}})
+      </span>
+    </span>
+  {{/if}}
+{{/if}}

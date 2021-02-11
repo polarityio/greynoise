@@ -5,6 +5,7 @@ polarity.export = PolarityComponent.extend({
   showTags: [],
   showAllTags: true,
   rawDataOpen: false,
+  expandableTitleStates: {},
   init() {
     this.set('showTags', this.get('tags') || []);
 
@@ -20,6 +21,13 @@ polarity.export = PolarityComponent.extend({
     this._super(...arguments);
   },
   actions: {
+    toggleExpandableTitle: function (index) {
+      const modifiedExpandableTitleStates = Object.assign({}, this.get('expandableTitleStates'), {
+        [index]: !this.get('expandableTitleStates')[index]
+      });
+
+      this.set(`expandableTitleStates`, modifiedExpandableTitleStates);
+    },
     toggleShowTags: function () {
       if (this.get('showAllTags')) {
         this.set('showTags', this.get('tags').slice(0, 3));

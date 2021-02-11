@@ -24,7 +24,7 @@ module.exports = {
    */
   description:
     'GreyNoise Intelligence is a cyber security company that collects, labels, and analyzes Internet-wide scan and attack data',
-  entityTypes: ['IPv4'],
+  entityTypes: ['IPv4', 'cve'],
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
@@ -57,6 +57,7 @@ module.exports = {
       file: './templates/gn-summary.hbs'
     }
   },
+  defaultColor: 'light-pink',
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
     // Relative paths are relative to the Greynoise integration's root directory
@@ -93,16 +94,7 @@ module.exports = {
       key: 'url',
       name: 'GreyNoise URL',
       description: 'The URL path to the GreyNoise API',
-      default: 'https://enterprise.api.greynoise.io/v2/noise',
-      type: 'text',
-      userCanEdit: false,
-      adminOnly: true
-    },
-    {
-      key: 'riotUrl',
-      name: 'GreyNoise Riot IP URL',
-      description: 'The URL path to the GreyNoise API',
-      default: 'https://enterprise.api.greynoise.io/v2/riot',
+      default: 'https://enterprise.api.greynoise.io/v2',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
