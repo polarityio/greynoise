@@ -8,8 +8,8 @@ The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan
 
 ## CVE Results
 <div style="display: flex; justify-content: flex-start; align-items: flex-start;">
-  <img width="500" alt="Integration Example IP Address" src="./assets/cve.png">
-  <img width="500" alt="Integration Example Indicators" src="./assets/cve-expanded-ip.png">
+  <img width="400" alt="Integration Example IP Address" src="./assets/cve.png">
+  <img width="400" alt="Integration Example Indicators" src="./assets/cve-expanded-ip.png">
 </div>
 
 To learn more about GreyNoise, please visit the [official website](https://greynoise.io).
