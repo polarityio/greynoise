@@ -11,9 +11,9 @@
   </span>
 {{/if}}
 {{#if torExitNode}}
-  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
-    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
-    <span class="integration-text-color">Tor Exit Node</span>
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-border-color critical-summary-tag">
+    <span class="acronym color=#fff">{{block.acronym}}</span>
+    <span class="critical-summary-tag">Tor Exit Node</span>
   </span>
 {{/if}}
 {{#each additionalTags as |tag index|}}
@@ -49,7 +49,7 @@
       <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
       <span class="integration-text-color">
         Malicious: 
-        {{#each details.stats.spoofable as |classification|}}
+        {{#each details.stats.classifications as |classification|}}
           {{#if (eq classification.classification "malicious")}}
             {{classification.count}}
           {{/if}}
