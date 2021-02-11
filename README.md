@@ -1,7 +1,16 @@
 # Polarity GreyNoise Integration
 The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan and attack activity related to indicators on your screen.  The scan and attack activity is then displayed  via the Polarity Overlay Window.
 
-![greynoise](https://user-images.githubusercontent.com/22529325/54240326-2382e280-44f4-11e9-87f3-09bbd854bb29.gif)
+## IP Address Resuts
+<div style="display: flex; justify-content: flex-start; align-items: flex-start;">
+  <img width="400" alt="Integration Example IP Address" src="./assets/ip.png">
+</div>
+
+## CVE Results
+<div style="display: flex; justify-content: flex-start; align-items: flex-start;">
+  <img width="500" alt="Integration Example IP Address" src="./assets/cve.png">
+  <img width="500" alt="Integration Example Indicators" src="./assets/cve-expanded-ip.png">
+</div>
 
 To learn more about GreyNoise, please visit the [official website](https://greynoise.io).
 

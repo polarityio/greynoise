@@ -16,14 +16,29 @@
     <span class="critical-summary-tag">Tor Exit Node</span>
   </span>
 {{/if}}
+{{#if details.metadata}}
+  {{#if details.metadata.country}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">Country: {{details.metadata.country}}</span>
+    </span>
+  {{/if}}
+  {{#if details.metadata.organization}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+      <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+      <span class="integration-text-color">Org: {{details.metadata.organization}}</span>
+    </span>
+  {{/if}}
+{{/if}}
+
 {{#each additionalTags as |tag index|}}
   <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
     <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
     <span class="integration-text-color">
-      {{fa-icon "tag" fixedWidth=true}}
+      {{fa-icon "tag" class="tag-icon" fixedWidth=true}}
       {{tag}}
       {{#if (and moreThan1Tags (eq (sub additionalTags.length 1) index))}}
-        ...
+        + {{sub tags.length 1}} others
       {{/if}}
     </span>
   </span>
