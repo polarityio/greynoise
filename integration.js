@@ -149,8 +149,8 @@ function handleRestError(error, entity, res, body) {
     };
   } else if (res.statusCode === 429) {
     result = {
-      error: 'Too Many Requests',
-      detail: body.message
+      entity: entity,
+      body: { limitHit: true }
     };
   } else {
     result = {

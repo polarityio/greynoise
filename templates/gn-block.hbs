@@ -501,6 +501,12 @@
 
 {{#if (and details (not block.userOptions.apiKey))}}
   <span class="p-title">{{fa-icon "info" fixedWidth=true}} GreyNoise Community Results</span>
+  {{#if details.limitHit}}
+    <span>Community API Limit Hit:</span>
+    <div style="margin-top: 3px;">
+      <a href="https://www.greynoise.io/pricing/" class="p-link">Get Started with GreyNoise Enterprise Here {{fa-icon "external-link-square" class="external-link-icon"}}</a>
+    </div>
+  {{/if}}
     {{#if details.ip}}
       <div>
           <span class="p-key">IP: </span>
@@ -536,6 +542,5 @@
           <span class="p-key">Last Seen: </span>
           <span class="p-value">{{details.last_seen}}</span>
       </div>
-    {{/if}}
-    <a href="https://www.greynoise.io/pricing/" class="p-link">Get Started with GreyNoise Enterprise Here {{fa-icon "external-link-square" class="external-link-icon"}}</a><br>
+    {{/if}}    
 {{/if}}
