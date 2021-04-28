@@ -21,7 +21,7 @@ To learn more about GreyNoise, please visit the [official website](https://greyn
 URL for Api access to Greynoise
 
 ### GreyNoise Api Key
-Accounts api key used to access GreyNoise Api.
+Accounts api key used to access GreyNoise Api. If no API Key is entered, we will default to using the GreyNoise Community API to search.
 
 ### Ignore IPs that have not been seen
 If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.

@@ -43,35 +43,56 @@ function startup(logger) {
 }
 
 function doLookup(entities, options, cb) {
+  Logger.trace({ entities });
+
+  if(!options.apiKey) {
+    useGreynoiseCommunityApi(entities, options, cb);
+  } else {
+    useGreynoiseStandardApi(entities, options, cb);
+  }
+}
+
+const useGreynoiseCommunityApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
 
-  Logger.trace({ entities });
-
   entities.forEach((entity) => {
-    Logger.trace({ uri: options }, 'Request URI');
-    
-    tasks.push(function(done) {
-      if(entity.isIP) {
-        getIpData(entity, options, done);
-        
-      } else if (entity.type === 'cve') {
-        getCveData(entity, options, done)
-      } else {
-        done({err: 'Unsupported entity type'})
-      }
+    let requestOptions = {
+      method: 'GET',
+      uri: 'https://api.greynoise.io/v3/community/' + entity.value,
+      headers: {
+        'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
+      },
+      json: true
+    };
+
+    Logger.trace({ requestOptions }, 'Request Options');
+
+    tasks.push(function (done) {
+      requestWithDefaults(requestOptions, function (error, res, body) {
+        let processedResult = handleRestError(error, entity, res, body);
+
+        if (processedResult.error) {
+          done(processedResult);
+          return;
+        }
+
+        done(null, processedResult);
+      });
     });
   });
 
   async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-    if (err) return cb(err);
+    if (err) {
+      Logger.error({ err: err }, 'Error');
+      cb(err);
+      return;
+    }
 
     results.forEach((result) => {
-      if (
-        (result.body === null || (Array.isArray(result.body) && result.body.length === 0)) &&
-        !(result.riotBody && result.riotBody.riot) &&
-        !(result.statBody && result.statBody.count > 0)
-      ) {
+      if (options.maliciousOnly === true && getIsMalicious(result) === false) return;
+
+      if (result.body === null || result.body.length === 0) {
         lookupResults.push({
           entity: result.entity,
           data: null
@@ -81,15 +102,121 @@ function doLookup(entities, options, cb) {
           entity: result.entity,
           data: {
             summary: [],
-            details: { ...result.body, ...result.riotBody, ...result.statBody }
+            details: result.body
           }
         });
       }
     });
 
+    Logger.debug({ lookupResults }, 'Results');
     cb(null, lookupResults);
   });
+};
+
+function handleRestError(error, entity, res, body) {
+  let result;
+
+  if (error) {
+    return {
+      error: error,
+      detail: 'HTTP Request Error'
+    };
+  }
+
+  if (res.statusCode === 200) {
+    // we got data!
+    result = {
+      entity: entity,
+      body: body
+    };
+  } else if (res.statusCode === 400) {
+    if (body.message.includes('Request is not a valid routable IPv4 address')) {
+      result = {
+        entity: entity,
+        body: null
+      };
+    } else {
+      result = {
+        error: 'Bad Request',
+        detail: body.message
+      };
+    }
+  } else if (res.statusCode === 404) {
+    // "IP not observed scanning the internet or contained in RIOT data set."
+    result = {
+      entity: entity,
+      body: null
+    };
+  } else if (res.statusCode === 429) {
+    result = {
+      error: 'Too Many Requests',
+      detail: body.message
+    };
+  } else {
+    result = {
+      error: 'Unexpected Error',
+      statusCode: res ? res.statusCode : 'Unknown',
+      detail: 'An unexpected error occurred',
+      body
+    };
+  }
+
+  return result;
 }
+
+function getIsMalicious(result) {
+  if (result.body && result.body.classification && result.body.classification === 'malicious') {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const useGreynoiseStandardApi = (entities, options, cb) => {
+let lookupResults = [];
+let tasks = [];
+
+entities.forEach((entity) => {
+  Logger.trace({ uri: options }, 'Request URI');
+
+  tasks.push(function (done) {
+    if (entity.isIP) {
+      getIpData(entity, options, done);
+    } else if (entity.type === 'cve') {
+      getCveData(entity, options, done);
+    } else {
+      done({ err: 'Unsupported entity type' });
+    }
+  });
+});
+
+async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
+  if (err) return cb(err);
+
+  results.forEach((result) => {
+    if (
+      (result.body === null || (Array.isArray(result.body) && result.body.length === 0)) &&
+      !(result.riotBody && result.riotBody.riot) &&
+      !(result.statBody && result.statBody.count > 0)
+    ) {
+      lookupResults.push({
+        entity: result.entity,
+        data: null
+      });
+    } else {
+      lookupResults.push({
+        entity: result.entity,
+        data: {
+          summary: [],
+          details: { ...result.body, ...result.riotBody, ...result.statBody }
+        }
+      });
+    }
+  });
+
+  cb(null, lookupResults);
+});
+};
 
 const getIpData = (entity, options, done) => {
   let noiseContextRequestOptions = {
@@ -312,21 +439,15 @@ const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done
 };
 
 function validateOptions(userOptions, cb) {
-  let errors = [];
-  if (
-    typeof userOptions.apiKey.value !== 'string' ||
-    (typeof userOptions.apiKey.value === 'string' && userOptions.apiKey.value.length === 0)
-  ) {
-    errors.push({
-      key: 'apiKey',
-      message: 'You must provide a valid API key'
-    });
-  }
-  cb(null, errors);
+  const urlError = userOptions.url.value && userOptions.url.value.endsWith('/')
+    ? [{ key: 'url', message: 'Your Url must not end with "/".' }]
+    : [];
+
+  cb(null, urlError);
 }
 
 module.exports = {
-  doLookup: doLookup,
-  startup: startup,
-  validateOptions: validateOptions
+  doLookup,
+  startup,
+  validateOptions
 };

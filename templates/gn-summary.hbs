@@ -4,6 +4,18 @@
     <span class="integration-text-color">Classification: {{details.classification}}</span>
   </span>
 {{/if}}
+{{#if (eq details.noise true)}}
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+    <span class="integration-text-color">NOISE</span>
+  </span>
+{{/if}}
+{{#if (eq details.riot true)}}
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+    <span class="integration-text-color">RIOT</span>
+  </span>
+{{/if}}
 {{#if details.category}}
   <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
     <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
