@@ -92,8 +92,8 @@ module.exports = {
   options: [
     {
       key: 'url',
-      name: 'GreyNoise URL',
-      description: 'The URL path to the GreyNoise API',
+      name: 'GreyNoise Enterprise URL',
+      description: 'The URL path to the Enterprise GreyNoise API you wish to use.',
       default: 'https://enterprise.api.greynoise.io/v2',
       type: 'text',
       userCanEdit: false,
@@ -102,7 +102,8 @@ module.exports = {
     {
       key: 'apiKey',
       name: 'API Key',
-      description: 'GreyNoise API Key',
+      description:
+        'Accounts api key used to access GreyNoise Api. If no API Key is entered, we will default to using the GreyNoise Community API to search.',
       default: '',
       type: 'password',
       userCanEdit: true,

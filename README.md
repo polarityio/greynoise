@@ -1,5 +1,5 @@
 # Polarity GreyNoise Integration
-The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan and attack activity related to indicators on your screen.  The scan and attack activity is then displayed  via the Polarity Overlay Window.
+The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan and attack activity related to indicators on your screen.  The scan and attack activity is then displayed via the Polarity Overlay Window, and we support the GreyNoise Community API out of the box if you do not already have an Enterpise API Key.
 
 ## IP Address Resuts
 <div style="display: flex; justify-content: flex-start; align-items: flex-start;">
@@ -17,11 +17,11 @@ To learn more about GreyNoise, please visit the [official website](https://greyn
 
 ## GreyNoise Integration Options
 
-### GreyNoise Url
-URL for Api access to Greynoise
+### GreyNoise Enterprise Url
+The URL path to the Enterprise GreyNoise API you wish to use
 
 ### GreyNoise Api Key
-Accounts api key used to access GreyNoise Api.
+Accounts api key used to access GreyNoise Api. If no API Key is entered, we will default to using the GreyNoise Community API to search.
 
 ### Ignore IPs that have not been seen
 If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.
