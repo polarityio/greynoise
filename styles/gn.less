@@ -1,4 +1,4 @@
-pre{
+pre {
   overflow-y: scroll;
   overflow-x: hidden;
   max-height: 200px;
@@ -6,19 +6,18 @@ pre{
   margin-top: 5px;
 }
 
-.email-container{
+.email-container {
   margin-top: 5px;
 }
 
 .pulse-tag {
-    background-color: #dedede;
-    border-radius: 4px;
-    margin-bottom: 2px;
-    padding: 3px;
-    display: inline-block;
-    padding-bottom: 3px;
+  background-color: #dedede;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  padding: 3px;
+  display: inline-block;
+  padding-bottom: 3px;
 }
-
 
 .open-modal-btn {
   border-radius: 4px;
@@ -46,21 +45,47 @@ pre{
 
 .expandable-title {
   display: block;
-  color:  #5CCD18 !important;
+  color: #5CCD18 !important;
   font-weight: 600;
   margin-bottom: 5px;
+
   & + .expandable-title {
     margin-top: 10px;
   }
 
   .text {
-    color:  #5CCD18 !important;
+    color: #5CCD18 !important;
     border-bottom: 1px solid #5CCD18;
+
     .desc {
-      color:  black !important;
+      color: black !important;
       font-weight: 400 !important;
     }
   }
+}
+
+.riot-summary-tag {
+  //background-color: #00e025;
+  border-radius: 4px;
+  display: inline-block;
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  border: solid #00e025;
+  border-width: 1px 3px;
+}
+
+.malicious-summary-tag {
+  //background-color: #00e025;
+  border-radius: 4px;
+  display: inline-block;
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  border: solid #fe0061;
+  border-width: 1px 3px;
 }
 
 .critical-summary-tag {

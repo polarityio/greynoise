@@ -1,7 +1,16 @@
 {{#if details.classification}}
   <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
-    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
-    <span class="integration-text-color">Classification: {{details.classification}}</span>
+  <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+  <span class="integration-text-color">Classification: </span>
+    {{#if (eq details.classification "malicious")}}
+      <span class="integration-text-color malicious-summary-tag">
+        {{details.classification}}
+      </span>
+    {{else}}
+      <span class="integration-text-color">
+        {{details.classification}}
+      </span>
+    {{/if}}
   </span>
 {{/if}}
 {{#if (eq details.noise true)}}
@@ -19,7 +28,13 @@
 {{#if (eq details.riot true)}}
   <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
     <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
-    <span class="integration-text-color">RIOT</span>
+    <span class="integration-text-color riot-summary-tag">RIOT</span>
+  </span>
+{{/if}}
+{{#if (eq details.malicious true)}}
+  <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+    <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+    <span class="integration-text-color riot-summary-tag">MALICIOUS</span>
   </span>
 {{/if}}
 {{#if details.category}}
@@ -71,7 +86,7 @@
     <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
       <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
       <span class="integration-text-color">
-        Top Country: 
+        Top Country:
         {{details.stats.countries.0.country}}
         ({{details.stats.countries.0.count}})
       </span>
@@ -81,7 +96,7 @@
     <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
       <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
       <span class="integration-text-color">
-        Malicious: 
+        Malicious:
         {{#each details.stats.classifications as |classification|}}
           {{#if (eq classification.classification "malicious")}}
             {{classification.count}}
@@ -94,7 +109,7 @@
     <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
       <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
       <span class="integration-text-color">
-        Spoofable: 
+        Spoofable:
         {{#each details.stats.spoofable as |spoofable|}}
           {{#if spoofable.spoofable}}
             {{spoofable.count}}
