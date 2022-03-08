@@ -80,7 +80,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'info' //trace, debug, info, warn, error, fatal
+    level: 'trace' //trace, debug, info, warn, error, fatal
   },
   /**
    * Options that are displayed to the user/admin in the Polarity integration user-interface.  Should be structured
@@ -114,6 +114,24 @@ module.exports = {
       name: 'Ignore IPs that have not been seen',
       description:
         'If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.',
+      default: false,
+      type: 'boolean',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'ignoreIp',
+      name: 'Ignore RFC1989 IPs',
+      description: 'Ignore RFC1989 IP addresses',
+      default: true,
+      type: 'boolean',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'communityApi',
+      name: 'Search using the community API',
+      description: 'Search using the community API',
       default: false,
       type: 'boolean',
       userCanEdit: true,
