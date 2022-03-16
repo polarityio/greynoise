@@ -80,7 +80,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   /**
    * Options that are displayed to the user/admin in the Polarity integration user-interface.  Should be structured
@@ -120,18 +120,18 @@ module.exports = {
       adminOnly: false
     },
     {
-      key: 'ignoreIp',
+      key: 'ignoreRC1918Ip',
       name: 'Ignore RFC1989 IPs',
       description: 'Ignore RFC1989 IP addresses',
-      default: true,
+      default: false,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
     {
-      key: 'communityApi',
-      name: 'Search using the community API',
-      description: 'Search using the community API',
+      key: 'standardApi',
+      name: 'Search using the standard API',
+      description: 'Search using the standard API',
       default: false,
       type: 'boolean',
       userCanEdit: true,

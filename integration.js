@@ -1,11 +1,14 @@
 'use strict';
+
 const request = require('request');
 const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
 const { LOADIPHLPAPI } = require('dns');
+
 const MAX_PARALLEL_LOOKUPS = 10;
+
 let Logger;
 let requestWithDefaults;
 
@@ -41,10 +44,12 @@ function startup(logger) {
 }
 
 function doLookup(entities, options, cb) {
-  if (options.communityApi === true) {
-    useGreynoiseCommunityApi(entities, options, cb);
-  } else {
+  Logger.trace({ entities });
+
+  if (options.standardApi) {
     useGreynoiseStandardApi(entities, options, cb);
+  } else {
+    useGreynoiseCommunityApi(entities, options, cb);
   }
 }
 
@@ -53,36 +58,29 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   let tasks = [];
 
   entities.forEach((entity) => {
-    if (options.ignoreIP === false || validSearch(entity.value, Logger)) {
-      let requestOptions = {
-        method: 'GET',
-        uri: 'https://api.greynoise.io/v3/community/' + entity.value,
-        headers: {
-          'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
-        },
-        json: true
-      };
+    let requestOptions = {
+      method: 'GET',
+      uri: 'https://api.greynoise.io/v3/community/' + entity.value,
+      headers: {
+        'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
+      },
+      json: true
+    };
 
-      // if key exists, call the community api with the provided key.
-      if (options.apiKey) {
-        requestOptions.headers.key = options.apiKey;
-      }
+    Logger.trace({ requestOptions }, 'Request Options');
 
-      Logger.trace({ requestOptions }, 'Request Options');
+    tasks.push(function (done) {
+      requestWithDefaults(requestOptions, function (error, res, body) {
+        let processedResult = handleRestError(error, entity, res, body);
 
-      tasks.push(function (done) {
-        requestWithDefaults(requestOptions, function (error, res, body) {
-          let processedResult = handleRestError(error, entity, res, body);
+        if (processedResult.error) {
+          done(processedResult);
+          return;
+        }
 
-          if (processedResult.error) {
-            done(processedResult);
-            return;
-          }
-
-          done(null, processedResult);
-        });
+        done(null, processedResult);
       });
-    }
+    });
   });
 
   async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
@@ -180,7 +178,8 @@ const useGreynoiseStandardApi = (entities, options, cb) => {
   let tasks = [];
 
   entities.forEach((entity) => {
-    // Logger.trace({ uri: options }, 'Request URI');
+    Logger.trace({ uri: options }, 'Request URI');
+
     tasks.push(function (done) {
       if (entity.isIP) {
         getIpData(entity, options, done);
@@ -220,11 +219,24 @@ const useGreynoiseStandardApi = (entities, options, cb) => {
   });
 };
 
+const isSearchable = (entity, options) => {
+  if (options.ignoreRC1918Ip) {
+    // if the option is true, filter out RC 1918 Ips with validateSearch
+    if (validSearch(entity.value)) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return true;
+  }
+};
+
 const getIpData = (entity, options, done) => {
-  if (options.ignoreIP === false || validSearch(entity.value, Logger)) {
+  if (isSearchable(entity.value, options)) {
     let noiseContextRequestOptions = {
       method: 'GET',
-      uri: options.url + '/noise/context/' + entity.value,
+      uri: options.url + '/v2/noise/context/' + entity.value,
       headers: {
         key: options.apiKey,
         'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
@@ -237,7 +249,7 @@ const getIpData = (entity, options, done) => {
 
       let riotIpRequestOptions = {
         method: 'GET',
-        uri: `${options.url}/riot/${entity.value}`,
+        uri: `${options.url}/v2/riot/${entity.value}`,
         headers: {
           key: options.apiKey,
           'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
@@ -250,8 +262,8 @@ const getIpData = (entity, options, done) => {
 
         processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
           if (ncError) return done(ncError);
-          let result, error;
 
+          let result, error;
           if (rRes.statusCode === 200) {
             if (!rBody.riot) {
               // cache these as a miss
@@ -284,6 +296,7 @@ const getIpData = (entity, options, done) => {
               detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
             };
           }
+
           done(error, result);
         });
       });
@@ -337,7 +350,7 @@ const processNoiseContextRequestResult = (entity, options, res, body, done) => {
 const getCveData = (entity, options, done) => {
   const gnqlRequestOptions = {
     method: 'GET',
-    uri: `${options.url}/experimental/gnql`,
+    uri: `${options.url}/v2/experimental/gnql`,
     qs: {
       size: 10,
       query: `cve:${entity.value}`
@@ -348,13 +361,12 @@ const getCveData = (entity, options, done) => {
     },
     json: true
   };
-
   requestWithDefaults(gnqlRequestOptions, function (httpError, res, body) {
     if (httpError) return done({ detail: 'Unexpected GNQL Query HTTP request error', httpError });
 
     const gnqlStatsRequestOptions = {
       method: 'GET',
-      uri: `${options.url}/experimental/gnql/stats`,
+      uri: `${options.url}/v2/experimental/gnql/stats`,
       qs: {
         count: 3,
         query: `cve:${entity.value}`
@@ -365,7 +377,6 @@ const getCveData = (entity, options, done) => {
       },
       json: true
     };
-
     requestWithDefaults(gnqlStatsRequestOptions, function (shttpError, sRes, sBody) {
       if (shttpError) return done({ detail: 'Unexpected GNQL Stats Query HTTP request error', shttpError });
 
@@ -443,14 +454,6 @@ const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done
   done(error, result);
 };
 
-function validateOptions(userOptions, cb) {
-  const urlError =
-    userOptions.url.value && userOptions.url.value.endsWith('/')
-      ? [{ key: 'url', message: 'Your Url must not end with "/".' }]
-      : [];
-  cb(null, urlError);
-}
-
 const validSearch = (search, Logger) => {
   // Determines if search is valid by excluding private and link local IPs
   //  127.  0.0.0 – 127.255.255.255  127.0.0.0 /8
@@ -465,9 +468,18 @@ const validSearch = (search, Logger) => {
 
   return result;
 };
+
+function validateOptions(userOptions, cb) {
+  const urlError =
+    userOptions.url.value && userOptions.url.value.endsWith('/')
+      ? [{ key: 'url', message: 'Your Url must not end with "/".' }]
+      : [];
+
+  cb(null, urlError);
+}
+
 module.exports = {
   doLookup,
   startup,
   validateOptions
 };
-
