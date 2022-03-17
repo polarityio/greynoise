@@ -123,7 +123,7 @@ module.exports = {
       key: 'ignoreRC1918Ip',
       name: 'Ignore RFC1989 IPs',
       description: 'Ignore RFC1989 IP addresses',
-      default: false,
+      default: true,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false

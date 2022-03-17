@@ -60,7 +60,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   entities.forEach((entity) => {
     let requestOptions = {
       method: 'GET',
-      uri: 'https://api.greynoise.io/v3/community/' + entity.value,
+      uri: options.url + '/v3/community/' + entity.value,
       headers: {
         'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
       },
