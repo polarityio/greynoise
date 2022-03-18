@@ -5,7 +5,6 @@ const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
-const { LOADIPHLPAPI } = require('dns');
 
 const MAX_PARALLEL_LOOKUPS = 10;
 

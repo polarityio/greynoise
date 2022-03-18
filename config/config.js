@@ -94,7 +94,7 @@ module.exports = {
       key: 'url',
       name: 'GreyNoise Enterprise URL',
       description: 'The URL path to the Enterprise GreyNoise API you wish to use.',
-      default: 'https://enterprise.api.greynoise.io/v2',
+      default: 'https://enterprise.api.greynoise.io',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
