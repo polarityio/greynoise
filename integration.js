@@ -45,7 +45,7 @@ function startup(logger) {
 function doLookup(entities, options, cb) {
   Logger.trace({ entities });
 
-  if (options.standardApi) {
+  if (options.subscriptionApi) {
     useGreynoiseStandardApi(entities, options, cb);
   } else {
     useGreynoiseCommunityApi(entities, options, cb);
