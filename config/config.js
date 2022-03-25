@@ -122,17 +122,18 @@ module.exports = {
     {
       key: 'ignoreRC1918Ip',
       name: 'Ignore RFC1989 IPs',
-      description: 'Ignore RFC1989 IP addresses',
+      description: 'Prevents RFC1989 IP addresses from being sent to the GreyNoise API for enrichment',
       default: true,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
     {
-      key: 'standardApi',
-      name: 'Search using the standard API',
-      description: 'Search using the standard API',
-      default: false,
+      key: 'subscriptionApi',
+      name: 'Search using the Subscription API',
+      description:
+        'Search using the GreyNoise Subscription Based APIs.  When disabled, the GreyNoise Community API will be used (only supports IP lookups)',
+      default: true,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
