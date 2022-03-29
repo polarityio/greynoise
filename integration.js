@@ -196,14 +196,14 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      if (
-        (result.body === null || (Array.isArray(result.body) && result.body.length === 0)) &&
-        !(result.riotBody && result.riotBody.riot) &&
-        !(result.statBody && result.statBody.count > 0)
-      ) {
+      // result.body should not be empty. { "ip": "Ip address here", "seen": false }
+      if (!result.body.seen) {
         lookupResults.push({
           entity: result.entity,
-          data: null
+          data: {
+            summary: ['IP address has not been seen'],
+            details: null
+          }
         });
       } else {
         lookupResults.push({
@@ -215,7 +215,7 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
         });
       }
     });
-    Logger.trace({ RESSSIE: lookupResults });
+
     cb(null, lookupResults);
   });
 };
@@ -473,15 +473,16 @@ const validSearch = (search, Logger) => {
 const setSummmaryTags = (data, version) => {
   let tags = [];
 
-  // if (_.get(data, 'body')) {
-  if (data.body.noise) {
-    tags.push(`Classification: ${data.body.classification}`);
+  if (_.get(data, 'body')) {
+    if (data.body.noise) {
+      tags.push(`Classification: ${data.body.classification}`);
+    }
+    if (data.body.riot) {
+      tags.push(`Classification: RIOT`);
+    }
   }
-  if (data.body.riot) {
-    tags.push(`Classification: RIOT`);
-  }
+
   tags.push(`API: ${version}`);
-  // }
 
   return _.uniq(tags);
 };
