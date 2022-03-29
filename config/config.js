@@ -49,14 +49,6 @@ module.exports = {
       file: './templates/gn-block.hbs'
     }
   },
-  summary: {
-    component: {
-      file: './components/gn-summary.js'
-    },
-    template: {
-      file: './templates/gn-summary.hbs'
-    }
-  },
   defaultColor: 'light-pink',
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.

@@ -5,6 +5,8 @@ const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
+const _ = require('lodash/fp');
+const { version } = require('os');
 
 const MAX_PARALLEL_LOOKUPS = 10;
 
@@ -46,7 +48,7 @@ function doLookup(entities, options, cb) {
   Logger.trace({ entities });
 
   if (options.subscriptionApi) {
-    useGreynoiseStandardApi(entities, options, cb);
+    useGreynoiseSubscriptionApi(entities, options, cb);
   } else {
     useGreynoiseCommunityApi(entities, options, cb);
   }
@@ -101,7 +103,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
         lookupResults.push({
           entity: result.entity,
           data: {
-            summary: [],
+            summary: setSummmaryTags(result, 'community'),
             details: result.body
           }
         });
@@ -172,7 +174,7 @@ function getIsMalicious(result) {
   }
 }
 
-const useGreynoiseStandardApi = (entities, options, cb) => {
+const useGreynoiseSubscriptionApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
 
@@ -207,13 +209,13 @@ const useGreynoiseStandardApi = (entities, options, cb) => {
         lookupResults.push({
           entity: result.entity,
           data: {
-            summary: [],
+            summary: setSummmaryTags(result, 'standard'),
             details: { ...result.body, ...result.riotBody, ...result.statBody }
           }
         });
       }
     });
-
+    Logger.trace({ RESSSIE: lookupResults });
     cb(null, lookupResults);
   });
 };
@@ -232,7 +234,7 @@ const isSearchable = (entity, options) => {
 };
 
 const getIpData = (entity, options, done) => {
-  if (isSearchable(entity.value, options)) {
+  if (isSearchable(entity, options)) {
     let noiseContextRequestOptions = {
       method: 'GET',
       uri: options.url + '/v2/noise/context/' + entity.value,
@@ -466,6 +468,22 @@ const validSearch = (search, Logger) => {
   let result = !regex.test(searchString);
 
   return result;
+};
+
+const setSummmaryTags = (data, version) => {
+  let tags = [];
+
+  // if (_.get(data, 'body')) {
+  if (data.body.noise) {
+    tags.push(`Classification: ${data.body.classification}`);
+  }
+  if (data.body.riot) {
+    tags.push(`Classification: RIOT`);
+  }
+  tags.push(`API: ${version}`);
+  // }
+
+  return _.uniq(tags);
 };
 
 function validateOptions(userOptions, cb) {
