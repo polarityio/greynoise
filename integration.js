@@ -6,7 +6,7 @@ const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
 const _ = require('lodash/fp');
-const { version } = require('os');
+
 
 const MAX_PARALLEL_LOOKUPS = 10;
 
@@ -472,7 +472,15 @@ const validSearch = (search, Logger) => {
 
 const setSummmaryTags = (data, version) => {
   let tags = [];
-  
+
+  if (version === 'standard') {
+    if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
+
+    if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
+
+    if (data.body.metadata.country) tags.push(`Country: ${data.body.metadata.country}`);
+  }
+
   if (data.body) {
     if (data.body.noise) {
       tags.push(`Classification: ${data.body.classification}`);
