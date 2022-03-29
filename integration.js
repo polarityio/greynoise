@@ -472,8 +472,8 @@ const validSearch = (search, Logger) => {
 
 const setSummmaryTags = (data, version) => {
   let tags = [];
-
-  if (_.get(data, 'body')) {
+  
+  if (data.body) {
     if (data.body.noise) {
       tags.push(`Classification: ${data.body.classification}`);
     }
