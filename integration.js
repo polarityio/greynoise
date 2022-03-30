@@ -7,7 +7,6 @@ const async = require('async');
 const fs = require('fs');
 const _ = require('lodash/fp');
 
-
 const MAX_PARALLEL_LOOKUPS = 10;
 
 let Logger;
@@ -197,7 +196,7 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
 
     results.forEach((result) => {
       // result.body should not be empty. { "ip": "Ip address here", "seen": false }
-      if (!result.body.seen) {
+      if (!result.body.seen && !result.riotBody) {
         lookupResults.push({
           entity: result.entity,
           data: {
@@ -259,6 +258,7 @@ const getIpData = (entity, options, done) => {
       };
 
       requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
+        Logger.trace({ BODY: rRes });
         if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
 
         processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
@@ -473,12 +473,14 @@ const validSearch = (search, Logger) => {
 const setSummmaryTags = (data, version) => {
   let tags = [];
 
+  tags.push(`API: ${version}`);
+
   if (version === 'standard') {
-    if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
+    if (data.body && data.body.metadata) {
+      if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
 
-    if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
-
-    if (data.body.metadata.country) tags.push(`Country: ${data.body.metadata.country}`);
+      if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
+    }
   }
 
   if (data.body) {
@@ -489,8 +491,6 @@ const setSummmaryTags = (data, version) => {
       tags.push(`Classification: RIOT`);
     }
   }
-
-  tags.push(`API: ${version}`);
 
   return _.uniq(tags);
 };
