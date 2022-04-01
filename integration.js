@@ -523,8 +523,8 @@ const setSummmaryTags = (data, version) => {
     if (data.entity.type === 'cve') {
       if (data.statBody.stats) {
         tags.push(`Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`);
-        tags.push(`Top Tag:[${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
-        tags.push(`Spoofable:[${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
+        tags.push(`Top Tag: [${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
+        tags.push(`Spoofable: [${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
 
         if (data.statBody.stats.classifications) {
           data.statBody.stats.classifications.forEach((classification) => {
