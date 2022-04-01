@@ -1,4 +1,4 @@
-{{#if (and details block.userOptions.apiKey)}}
+{{#if (eq details.apiService 'subscription')}}
   <div class='p-non-exfoliate-outer-padding'>
     {{#if (and details.seen details.ip)}}
       <div>
@@ -33,12 +33,12 @@
         <span class='p-key'> VPN: </span>
         <span class='p-value'>{{details.vpn}}</span>
       </div>
-    {{/if}}
-    {{#if details.vpn_service}}
-      <div>
-        <span class='p-key'> VPN Service: </span>
-        <span class='p-value'>{{details.vpn_service}}</span>
-      </div>
+      {{#if details.vpn_service}}
+        <div>
+          <span class='p-key'> VPN Service: </span>
+          <span class='p-value'>{{details.vpn_service}}</span>
+        </div>
+      {{/if}}
     {{/if}}
     {{#if (and details.classification (not (eq details.classification 'unknown')))}}
       <div>
@@ -75,11 +75,12 @@
       </div>
     {{/if}}
     {{! end of non-riot}}
+
     {{#if details.riot}}
       <div class='p-title'>
         {{fa-icon 'asterisk' fixedWidth=true}}
         RIOT Information
-        <a href='https://www.greynoise.io/viz/ip/{{details.ip}}' class='p-link'>(Pivot To GreyNoise RIOT)</a>
+        <a href='https://www.greynoise.io/viz/ip/{{details.ip}}' class='p-link'>(Pivot To GreyNoise Visualizer)</a>
       </div>
       {{#if details.name}}
         <div>
@@ -531,7 +532,7 @@
   </div>
 {{/if}}
 
-{{#if (and details (not block.userOptions.apiKey))}}
+{{#if (eq details.apiService 'community')}}
   <span class='p-title'>{{fa-icon 'info' fixedWidth=true}} GreyNoise Community Results</span>
   {{#if details.limitHit}}
     <span>Community API Limit Hit:</span>
@@ -545,9 +546,6 @@
       <span class='p-key'>IP: </span>
       <a href='{{details.link}}' class='p-link'>{{details.ip}}
         {{fa-icon 'external-link-square' class='external-link-icon'}}</a>
-      |
-      <a class='p-link' href='https://www.virustotal.com/gui/search/{{details.ip}}'>VT
-        {{fa-icon 'external-link-square' class='external-link-icon'}}</a><br />
     </div>
   {{/if}}
   {{#if details.noise}}

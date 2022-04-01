@@ -99,6 +99,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
           data: null
         });
       } else {
+        result.body.apiService = 'community';
         lookupResults.push({
           entity: result.entity,
           data: {
@@ -196,7 +197,7 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
 
     results.forEach((result) => {
       // result.body should not be empty. { "ip": "Ip address here", "seen": false }
-      if (!result.body.seen && !result.riotBody) {
+      if (!result.body.seen && !result.body) {
         lookupResults.push({
           entity: result.entity,
           data: {
@@ -205,16 +206,16 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
           }
         });
       } else {
+        result.body.apiService = 'subscription';
         lookupResults.push({
           entity: result.entity,
           data: {
-            summary: setSummmaryTags(result, 'standard'),
-            details: { ...result.body, ...result.riotBody, ...result.statBody }
+            summary: setSummmaryTags(result, 'subscription'),
+            details: { ...result.body, ...result.rBody, ...result.statBody }
           }
         });
       }
     });
-
     cb(null, lookupResults);
   });
 };
@@ -272,7 +273,7 @@ const getIpData = (entity, options, done) => {
             } else {
               result = {
                 ...ncResult,
-                riotBody: rBody
+                rBody: rBody
               };
             }
           } else if ([400, 404].includes(rRes.statusCode)) {
@@ -280,20 +281,20 @@ const getIpData = (entity, options, done) => {
           } else if (rRes.statusCode === 429) {
             error = {
               ...ncResult,
-              riotBody: rBody,
+              rBody: rBody,
               detail: "Too many requests.  You've hit the rate limit"
             };
           } else if (rRes.statusCode === 401) {
             error = {
               ...ncResult,
-              riotBody: rBody,
+              rBody: rBody,
               detail: 'Unauthorized: Please check your API key'
             };
           } else {
             // unexpected response received
             error = {
               ...ncResult,
-              riotBody: rBody,
+              rBody: rBody,
               detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
             };
           }
@@ -474,21 +475,86 @@ const setSummmaryTags = (data, version) => {
   let tags = [];
 
   tags.push(`API: ${version}`);
+  // subscription non-riot
+  if (version === 'subscription') {
+    if (data.body) {
+      if (data.body.seen) {
+        tags.push(`Classification: ${data.body.classification}`);
+        tags.push(`Noise`);
+      }
+      if (data.body && data.body.metadata) {
+        if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
 
-  if (version === 'standard') {
-    if (data.body && data.body.metadata) {
-      if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
+        if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
 
-      if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
+        if (data.body.metadata.country) {
+          tags.push(`Country: ${data.body.metadata.country}`);
+        }
+        if (data.body.metadata.tor) {
+          tags.push(`TOR exit node`);
+        }
+        if (data.body.metadata.organization) {
+          tags.push(`Org: ${data.body.metadata.organization}`);
+        }
+      }
+
+      if (data.body.tags && data.body.tags.length) {
+        const tagLength = data.body.tags.length;
+        if (tagLength === 1) {
+          tags.push(`GN Tags: ${data.body.tags}`);
+        } else {
+          const firstItem = data.body.tags[0];
+
+          tags.push(`GN Tags: ${firstItem} + ${tagLength - 1} others`);
+        }
+      }
+    }
+
+    if (data.rBody) {
+      if (data.rBody.riot) {
+        tags.push(`Classification: RIOT`);
+        tags.push(`RIOT`);
+        if (data.rBody.trust_level) {
+          tags.push(`Trust Level: ${data.rBody.trust_level}`);
+        }
+      }
+    }
+
+    if (data.entity.type === 'cve') {
+      if (data.statBody.stats) {
+        tags.push(`Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`);
+        tags.push(`Top Tag:[${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
+        tags.push(`Spoofable:[${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
+
+        if (data.statBody.stats.classifications) {
+          data.statBody.stats.classifications.forEach((classification) => {
+            if (classification.classification === 'malicious') {
+              tags.push(`Malicious: ${classification.count}`);
+            }
+          });
+        }
+        if (data.statBody.stats.spoofable) {
+          data.statBody.stats.spoofable.forEach((spoof) => {
+            if (spoof.spoofable) {
+              tags.push(`Spoofable: ${spoof.count}`);
+            }
+          });
+        }
+      }
     }
   }
 
-  if (data.body) {
-    if (data.body.noise) {
-      tags.push(`Classification: ${data.body.classification}`);
+  if (version === 'community') {
+    if (data.body) {
+      if (data.body.noise) {
+        tags.push(`Classification: ${data.body.classification}`);
+        tags.push(`Noise`);
+      }
     }
+
     if (data.body.riot) {
       tags.push(`Classification: RIOT`);
+      tags.push(`RIOT`);
     }
   }
 
