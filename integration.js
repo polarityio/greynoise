@@ -196,22 +196,27 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      // result.body should not be empty. { "ip": "Ip address here", "seen": false }
-      if (!result.body.seen && !result.body) {
+      if (result && !result.data && result.return_to_client) {
+        // this response is for the case of ignoring RFC1918 ips.
         lookupResults.push({
           entity: result.entity,
-          data: {
-            summary: ['IP address has not been seen'],
-            details: null
-          }
+          data: null
         });
-      } else {
+      } else if (result && result.body && result.body.seen) {
         result.body.apiService = 'subscription';
         lookupResults.push({
           entity: result.entity,
           data: {
             summary: setSummmaryTags(result, 'subscription'),
             details: { ...result.body, ...result.rBody, ...result.statBody }
+          }
+        });
+      } else {
+        lookupResults.push({
+          entity: result.entity,
+          data: {
+            summary: ['IP address has not been seen'],
+            details: null
           }
         });
       }
@@ -259,13 +264,12 @@ const getIpData = (entity, options, done) => {
       };
 
       requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
-        Logger.trace({ BODY: rRes });
         if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
-
         processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
           if (ncError) return done(ncError);
 
           let result, error;
+
           if (rRes.statusCode === 200) {
             if (!rBody.riot) {
               // cache these as a miss
@@ -303,6 +307,8 @@ const getIpData = (entity, options, done) => {
         });
       });
     });
+  } else {
+    done(null, { entity, data: null, return_to_client: true });
   }
 };
 
@@ -467,7 +473,6 @@ const validSearch = (search, Logger) => {
   const regex = new RegExp(nonRoutable);
   const searchString = String(search);
   let result = !regex.test(searchString);
-
   return result;
 };
 
