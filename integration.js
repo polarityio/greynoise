@@ -62,6 +62,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
       method: 'GET',
       uri: options.url + '/v3/community/' + entity.value,
       headers: {
+        key: options.apiKey,
         'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
       },
       json: true
@@ -196,31 +197,70 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      if (result && !result.data && result.return_to_client) {
-        // this response is for the case of ignoring RFC1918 ips.
-        lookupResults.push({
-          entity: result.entity,
-          data: null
-        });
-      } else if (result && result.body && result.body.seen) {
-        result.body.apiService = 'subscription';
-        lookupResults.push({
-          entity: result.entity,
-          data: {
-            summary: setSummmaryTags(result, 'subscription'),
-            details: { ...result.body, ...result.rBody, ...result.statBody }
-          }
-        });
-      } else {
-        lookupResults.push({
-          entity: result.entity,
-          data: {
-            summary: ['IP address has not been seen'],
-            details: null
-          }
-        });
+      Logger.trace({ RESULT: 1231231231231, result });
+      if (result.entity.type === 'cve') {
+        if (result && !result.body && !result.body.data) {
+          lookupResults.push({
+            entity: result.entity,
+            data: null
+          });
+        } else if (result && result.body && result.body.data) {
+          result.body.apiService = 'subscription';
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: setSummmaryTags(result, 'subscription'),
+              details: { ...result.body, ...result.rBody, ...result.statBody }
+            }
+          });
+        } else {
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: ['IP address has not been seen'],
+              details: null
+            }
+          });
+        }
+      }
+
+      if (result.entity.type === 'IPv4' || result.entity.type === 'IPv6') {
+        if (result && !result.data && result.return_to_client) {
+          // this response is for the case of ignoring RFC1918 ips.
+          lookupResults.push({
+            entity: result.entity,
+            data: null
+          });
+        } else if (result && result.rBody) {
+          result.body.apiService = 'subscription';
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: setSummmaryTags(result, 'subscription'),
+              details: { ...result.body, ...result.rBody, ...result.statBody }
+            }
+          });
+        } else if (result && result.body && result.body.seen) {
+          result.body.apiService = 'subscription';
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: setSummmaryTags(result, 'subscription'),
+              details: { ...result.body, ...result.rBody, ...result.statBody }
+            }
+          });
+        } else {
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: ['IP address has not been seen'],
+              details: null
+            }
+          });
+        }
       }
     });
+    Logger.trace({ lookupResults }, 'response returned to client');
     cb(null, lookupResults);
   });
 };
@@ -370,6 +410,7 @@ const getCveData = (entity, options, done) => {
     json: true
   };
   requestWithDefaults(gnqlRequestOptions, function (httpError, res, body) {
+    Logger.trace({ CVE_BODY: httpError });
     if (httpError) return done({ detail: 'Unexpected GNQL Query HTTP request error', httpError });
 
     const gnqlStatsRequestOptions = {
@@ -513,6 +554,12 @@ const setSummmaryTags = (data, version) => {
           tags.push(`GN Tags: ${firstItem} + ${tagLength - 1} others`);
         }
       }
+
+      if (data.body && data.body.actor) {
+        if (data.body.actor !== 'unknown') {
+          tags.push(`GN Actor: ${data.body.actor}`);
+        }
+      }
     }
 
     if (data.rBody) {
@@ -527,21 +574,20 @@ const setSummmaryTags = (data, version) => {
 
     if (data.entity.type === 'cve') {
       if (data.statBody.stats) {
-        tags.push(`Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`);
-        tags.push(`Top Tag: [${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
-        tags.push(`Spoofable: [${data.statBody.stats.tags[0].tag}] (${data.statBody.stats.tags.length})`);
+        if (data.statBody.stats && data.statBody.stats.countries) {
+          tags.push(
+            `Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`
+          );
+        }
+
+        if (data.statBody.stats && data.statBody.stats.tags) {
+          tags.push(`Top Tag: ${data.statBody.stats.tags[0].tag} (${data.statBody.stats.tags.length})`);
+        }
 
         if (data.statBody.stats.classifications) {
           data.statBody.stats.classifications.forEach((classification) => {
             if (classification.classification === 'malicious') {
               tags.push(`Malicious: ${classification.count}`);
-            }
-          });
-        }
-        if (data.statBody.stats.spoofable) {
-          data.statBody.stats.spoofable.forEach((spoof) => {
-            if (spoof.spoofable) {
-              tags.push(`Spoofable: ${spoof.count}`);
             }
           });
         }
@@ -556,10 +602,15 @@ const setSummmaryTags = (data, version) => {
         tags.push(`Noise`);
       }
     }
-
     if (data.body.riot) {
       tags.push(`Classification: RIOT`);
       tags.push(`RIOT`);
+    }
+
+    if (data.body.name) {
+      if (data.body.name !== 'unknown') {
+        tags.push(`GN Name: ${data.body.name}`);
+      }
     }
   }
 
