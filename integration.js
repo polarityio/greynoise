@@ -56,64 +56,77 @@ function doLookup(entities, options, cb) {
 const useGreynoiseCommunityApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
+  let validSearch;
+
+  if (!options.apiKey) {
+    throw new Error('Unauthorized: Please check your API key');
+  }
 
   entities.forEach((entity) => {
-    let requestOptions = {
-      method: 'GET',
-      uri: options.url + '/v3/community/' + entity.value,
-      headers: {
-        key: options.apiKey,
-        'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
-      },
-      json: true
-    };
+    validSearch = isValidSearch(entity, options);
+  });
 
-    Logger.trace({ requestOptions }, 'Request Options');
+  if (validSearch) {
+    entities.forEach((entity) => {
+      let requestOptions = {
+        method: 'GET',
+        uri: options.url + '/v3/community/' + entity.value,
+        headers: {
+          key: options.apiKey,
+          'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
+        },
+        json: true
+      };
 
-    tasks.push(function (done) {
-      requestWithDefaults(requestOptions, function (error, res, body) {
-        let processedResult = handleRestError(error, entity, res, body);
+      Logger.trace({ requestOptions }, 'Request Options');
 
-        if (processedResult.error) {
-          done(processedResult);
-          return;
-        }
+      tasks.push(function (done) {
+        requestWithDefaults(requestOptions, function (error, res, body) {
+          let processedResult = handleRestError(error, entity, res, body);
 
-        done(null, processedResult);
+          if (processedResult.error) {
+            done(processedResult);
+            return;
+          }
+
+          done(null, processedResult);
+        });
       });
     });
-  });
 
-  async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-    if (err) {
-      Logger.error({ err: err }, 'Error');
-      cb(err);
-      return;
-    }
-
-    results.forEach((result) => {
-      if (options.maliciousOnly === true && getIsMalicious(result) === false) return;
-
-      if (result.body === null || result.body.length === 0) {
-        lookupResults.push({
-          entity: result.entity,
-          data: null
-        });
-      } else {
-        result.body.apiService = 'community';
-        lookupResults.push({
-          entity: result.entity,
-          data: {
-            summary: setSummmaryTags(result, 'community'),
-            details: result.body
-          }
-        });
+    async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
+      if (err) {
+        Logger.error({ err: err }, 'Error');
+        cb(err);
+        return;
       }
-    });
 
-    Logger.debug({ lookupResults }, 'Results');
-    cb(null, lookupResults);
-  });
+      results.forEach((result) => {
+        if (options.maliciousOnly === true && getIsMalicious(result) === false) return;
+
+        if (result.body === null || result.body.length === 0) {
+          lookupResults.push({
+            entity: result.entity,
+            data: null
+          });
+        } else {
+          result.body.apiService = 'community';
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: setSummmaryTags(result, 'community'),
+              details: result.body
+            }
+          });
+        }
+      });
+
+      Logger.debug({ lookupResults }, 'Results');
+      cb(null, lookupResults);
+    });
+  } else {
+    cb(null, { entity, data: null, return_to_client: true });
+  }
 };
 
 function handleRestError(error, entity, res, body) {
@@ -197,7 +210,6 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      Logger.trace({ RESULT: 1231231231231, result });
       if (result.entity.type === 'cve') {
         if (result && !result.body && !result.body.data) {
           lookupResults.push({
@@ -265,21 +277,8 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
   });
 };
 
-const isSearchable = (entity, options) => {
-  if (options.ignoreRC1918Ip) {
-    // if the option is true, filter out RC 1918 Ips with validateSearch
-    if (validSearch(entity.value)) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-};
-
 const getIpData = (entity, options, done) => {
-  if (isSearchable(entity, options)) {
+  if (isValidSearch(entity, options)) {
     let noiseContextRequestOptions = {
       method: 'GET',
       uri: options.url + '/v2/noise/context/' + entity.value,
@@ -410,7 +409,6 @@ const getCveData = (entity, options, done) => {
     json: true
   };
   requestWithDefaults(gnqlRequestOptions, function (httpError, res, body) {
-    Logger.trace({ CVE_BODY: httpError });
     if (httpError) return done({ detail: 'Unexpected GNQL Query HTTP request error', httpError });
 
     const gnqlStatsRequestOptions = {
@@ -503,18 +501,34 @@ const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done
   done(error, result);
 };
 
-const validSearch = (search, Logger) => {
-  // Determines if search is valid by excluding private and link local IPs
-  //  127.  0.0.0 – 127.255.255.255  127.0.0.0 /8
-  //  10.  0.0.0 –  10.255.255.255   10.0.0.0 /8
-  // 172. 16.0.0 – 172.31.255.255   172.16.0.0 /12
-  // 192.168.0.0 – 192.168.255.255   192.168.0.0 /16
-  // 169.254.0.0 - 169.254.255.255   169.254.0.0/16
-  let nonRoutable = '^(10|127|169.254|172.1[6-9]|172.2[0-9]|172.3[0-1]|192.168).';
-  const regex = new RegExp(nonRoutable);
-  const searchString = String(search);
-  let result = !regex.test(searchString);
-  return result;
+const isLoopBackIp = (entity) => {
+  Logger.trace({ ENT: entity });
+  return entity.startsWith('127');
+};
+
+const isLinkLocalAddress = (entity) => {
+  return entity.startsWith('169');
+};
+
+const checkIfPrivateIP = (entity) => {
+  return entity.isPrivateIP === true;
+};
+
+const isValidSearch = (entity, options) => {
+  if (options.ignoreRC1918Ip) {
+    const isLoopbackOrLinkLocalIp = [isLoopBackIp(entity.value), isLinkLocalAddress(entity.value)].some(
+      (item) => item === true
+    );
+    const isPrivateIp = checkIfPrivateIP(entity);
+
+    if (isLoopbackOrLinkLocalIp || isPrivateIp) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    return true;
+  }
 };
 
 const setSummmaryTags = (data, version) => {
@@ -609,7 +623,7 @@ const setSummmaryTags = (data, version) => {
 
     if (data.body.name) {
       if (data.body.name !== 'unknown') {
-        tags.push(`GN Name: ${data.body.name}`);
+        tags.push(`Name: ${data.body.name}`);
       }
     }
   }

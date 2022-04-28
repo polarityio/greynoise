@@ -72,7 +72,7 @@ module.exports = {
     rejectUnauthorized: true
   },
   logging: {
-    level: 'trace' //trace, debug, info, warn, error, fatal
+    level: 'info' //trace, debug, info, warn, error, fatal
   },
   /**
    * Options that are displayed to the user/admin in the Polarity integration user-interface.  Should be structured
@@ -113,9 +113,9 @@ module.exports = {
     },
     {
       key: 'ignoreRC1918Ip',
-      name: 'Ignore RFC1989 IPs',
-      description: 'Prevents RFC1989 IP addresses from being sent to the GreyNoise API for enrichment',
-      default: true,
+      name: 'Ignore RFC 1989 IPs',
+      description: 'Prevents RFC 1989 IP addresses from being sent to the GreyNoise API for enrichment',
+      default: false,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
