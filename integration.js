@@ -57,6 +57,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
   let validSearch;
+  let validType;
 
   if (!options.apiKey) {
     throw new Error('Unauthorized: Please check your API key');
@@ -64,9 +65,10 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
 
   entities.forEach((entity) => {
     validSearch = isValidSearch(entity, options);
+    validType = entity;
   });
 
-  if (validSearch) {
+  if (validSearch && validType.type !== 'cve') {
     entities.forEach((entity) => {
       let requestOptions = {
         method: 'GET',
@@ -78,7 +80,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
         json: true
       };
 
-      Logger.trace({ requestOptions }, 'Request Options');
+      Logger.trace({ requestOptions }, 'request options');
 
       tasks.push(function (done) {
         requestWithDefaults(requestOptions, function (error, res, body) {
@@ -125,7 +127,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
       cb(null, lookupResults);
     });
   } else {
-    cb(null, { entity, data: null, return_to_client: true });
+    cb(null, [{ entity: validType, data: null, return_to_client: true }]);
   }
 };
 
