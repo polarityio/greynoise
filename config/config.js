@@ -95,7 +95,7 @@ module.exports = {
       key: 'apiKey',
       name: 'API Key',
       description:
-        'Accounts api key used to access GreyNoise Api. If no API Key is entered, we will default to using the GreyNoise Community API to search.',
+        'Accounts api key used to access GreyNoise Api.',
       default: '',
       type: 'password',
       userCanEdit: true,
@@ -113,8 +113,8 @@ module.exports = {
     },
     {
       key: 'ignoreRC1918Ip',
-      name: 'Ignore RFC 1989 IPs',
-      description: 'Prevents RFC 1989 IP addresses from being sent to the GreyNoise API for enrichment',
+      name: 'Ignore RFC1918 IPs',
+      description: 'Prevents RFC1918 IP addresses from being sent to the GreyNoise API for enrichment.',
       default: false,
       type: 'boolean',
       userCanEdit: true,

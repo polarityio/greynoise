@@ -26,6 +26,9 @@ Accounts api key used to access GreyNoise Api. If no API Key is entered, we will
 ### Ignore IPs that have not been seen
 If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.
 
+### Ignore RFC1918 IPs 
+Prevents RFC1918 IP addresses from being sent to the GreyNoise API for enrichment.
+
 ## Installation Instructions
 
 Installation instructions for integrations are provided on the [PolarityIO GitHub Page](https://polarityio.github.io/).
