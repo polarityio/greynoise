@@ -64,7 +64,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   }
 
   entities.forEach((entity) => {
-    validSearch = isValidSearch(entity, options);
+    validSearch = isValidSearch(entity);
     validType = entity;
   });
 
@@ -280,7 +280,7 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
 };
 
 const getIpData = (entity, options, done) => {
-  if (isValidSearch(entity, options)) {
+  if (isValidSearch(entity)) {
     let noiseContextRequestOptions = {
       method: 'GET',
       uri: options.url + '/v2/noise/context/' + entity.value,
@@ -504,7 +504,6 @@ const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done
 };
 
 const isLoopBackIp = (entity) => {
-  Logger.trace({ ENT: entity });
   return entity.startsWith('127');
 };
 
@@ -516,18 +515,14 @@ const checkIfPrivateIP = (entity) => {
   return entity.isPrivateIP === true;
 };
 
-const isValidSearch = (entity, options) => {
-  if (options.ignoreRC1918Ip) {
-    const isLoopbackOrLinkLocalIp = [isLoopBackIp(entity.value), isLinkLocalAddress(entity.value)].some(
-      (item) => item === true
-    );
-    const isPrivateIp = checkIfPrivateIP(entity);
+const isValidSearch = (entity) => {
+  const isLoopbackOrLinkLocalIp = [isLoopBackIp(entity.value), isLinkLocalAddress(entity.value)].some(
+    (item) => item === true
+  );
+  const isPrivateIp = checkIfPrivateIP(entity);
 
-    if (isLoopbackOrLinkLocalIp || isPrivateIp) {
-      return false;
-    } else {
-      return true;
-    }
+  if (isLoopbackOrLinkLocalIp || isPrivateIp) {
+    return false;
   } else {
     return true;
   }
@@ -535,8 +530,6 @@ const isValidSearch = (entity, options) => {
 
 const setSummmaryTags = (data, version) => {
   let tags = [];
-
-  tags.push(`API: ${version}`);
   // subscription non-riot
   if (version === 'subscription') {
     if (data.body) {
@@ -567,7 +560,7 @@ const setSummmaryTags = (data, version) => {
         } else {
           const firstItem = data.body.tags[0];
 
-          tags.push(`GN Tags: ${firstItem} + ${tagLength - 1} others`);
+          tags.push(`GN Tags: ${firstItem} +${tagLength - 1} more tags`);
         }
       }
 
@@ -620,7 +613,7 @@ const setSummmaryTags = (data, version) => {
     }
     if (data.body.riot) {
       tags.push(`Classification: RIOT`);
-      tags.push(`RIOT`);
+      // tags.push(`RIOT`);
     }
 
     if (data.body.name) {

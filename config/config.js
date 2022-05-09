@@ -111,15 +111,15 @@ module.exports = {
       userCanEdit: true,
       adminOnly: false
     },
-    {
-      key: 'ignoreRC1918Ip',
-      name: 'Ignore RFC1918 IPs',
-      description: 'Prevents RFC1918 IP addresses from being sent to the GreyNoise API for enrichment.',
-      default: false,
-      type: 'boolean',
-      userCanEdit: true,
-      adminOnly: false
-    },
+    // {
+    //   key: 'ignoreRC1918Ip',
+    //   name: 'Ignore RFC1918 IPs',
+    //   description: 'Prevents RFC1918 IP addresses from being sent to the GreyNoise API for enrichment.',
+    //   default: false,
+    //   type: 'boolean',
+    //   userCanEdit: true,
+    //   adminOnly: false
+    // },
     {
       key: 'subscriptionApi',
       name: 'Search using the Subscription API',
