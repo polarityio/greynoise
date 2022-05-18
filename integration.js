@@ -583,7 +583,13 @@ const getCommunitySummaryTags = (data) => {
   }
 
   if (data.name && data.name !== 'unknown') {
-    tags.push(`Name: ${data.name}`);
+    if (data.riot) {
+      tags.push(`Provider: ${data.name}`);
+    } else if (data.noise) {
+      tags.push(`Riot: ${data.name}`);
+    } else {
+      tags.push(`Name: ${data.name}`);
+    }
   }
 
   return tags;
@@ -615,7 +621,10 @@ const getSubscriptionSummaryTags = (data) => {
 
     if (data.body && data.body.metadata) {
       if (data.body.metadata.tor) {
-        tags.push(`TOR exit node`);
+        tags.push({
+          icon: 'user-secret',
+         text: 'TOR'
+        });
       }
       if (data.body.metadata.organization) {
         tags.push(`Org: ${data.body.metadata.organization}`);
@@ -623,11 +632,11 @@ const getSubscriptionSummaryTags = (data) => {
     }
 
     if (data.body && Array.isArray(data.body.tags) && data.body.tags.length > 0) {
-      for(let i=0; i<data.body.tags.length && i < MAX_GN_TAGS; i++){
+      for (let i = 0; i < data.body.tags.length && i < MAX_GN_TAGS; i++) {
         tags.push(`${data.body.tags[i]}`);
       }
 
-      if(data.body.tags.length > MAX_GN_TAGS){
+      if (data.body.tags.length > MAX_GN_TAGS) {
         tags.push(`+${data.body.tags.length - MAX_GN_TAGS} tags`);
       }
     }
@@ -639,26 +648,28 @@ const getSubscriptionSummaryTags = (data) => {
     }
   }
 
-  if (data.rBody) {
-    if (data.rBody.riot) {
-      tags.push({
-        type: 'RIOT',
-        text: `Classification: RIOT`
-      });
-
-      if (data.rBody.trust_level) {
-        if (data.rBody.trust_level === '1') {
-          tags.push(`Trust Level: 1 - Reasonably Ignore`);
-        } else if (data.rBody.trust_level === '2') {
-          tags.push(`Trust Level: 2 - Commonly Seen`);
-        } else {
-          tags.push(`Trust Level: ${data.rBody.trust_level}`);
-        }
+  if (data.rBody && data.rBody.riot) {
+    if (data.rBody.trust_level) {
+      if (data.rBody.trust_level === '1') {
+        // Only RIOT IPs with a trust level of 1 are given the green threshold checkmark
+        tags.push({
+          type: 'RIOT',
+          text: `Classification: RIOT`
+        });
+        tags.push(`Trust Level: 1 - Reasonably Ignore`);
+      } else if (data.rBody.trust_level === '2') {
+        tags.push('Classification: RIOT');
+        tags.push(`Trust Level: 2 - Commonly Seen`);
+      } else {
+        tags.push('Classification: RIOT');
+        tags.push(`Trust Level: ${data.rBody.trust_level}`);
       }
+    } else {
+      tags.push('Classification: RIOT');
+    }
 
-      if (data.rBody.name) {
-        tags.push(data.rBody.name);
-      }
+    if (data.rBody.name) {
+      tags.push(data.rBody.name);
     }
   }
 
@@ -692,9 +703,7 @@ const getSubscriptionSummaryTags = (data) => {
 function validateOptions(userOptions, cb) {
   const errors = [];
 
-  if (
-      userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0
-  ) {
+  if (userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0) {
     errors.push({
       key: 'apiKey',
       message: 'You must provide a GreyNoise API key if using the subscription API'

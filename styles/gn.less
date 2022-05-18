@@ -1,4 +1,5 @@
 @riot-color: #7BC942;
+@border-color: #dee2e6;
 
 pre {
   overflow-y: scroll;
@@ -31,9 +32,12 @@ pre {
   word-break: break-word;
 }
 
-.raw-data-container {
-  max-height: 300px;
+.activity-container{
+  max-height: 200px;
   overflow-y: auto;
+  line-height: normal;
+  border: 1px solid @border-color;
+  padding: 5px;
 }
 
 .expandable-title {
