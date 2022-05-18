@@ -1,11 +1,11 @@
 {
   "main": "./integration.js",
   "name": "GreyNoise",
-  "version": "3.3.0-beta",
+  "version": "3.3.0",
   "private": true,
   "dependencies": {
-    "async": "^3.2.0",
+    "async": "^3.2.3",
     "lodash": "^4.17.21",
-    "request": "^2.88.2"
+    "postman-request": "^2.88.1-postman.31"
   }
 }

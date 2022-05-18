@@ -49,6 +49,14 @@ module.exports = {
       file: './templates/gn-block.hbs'
     }
   },
+  summary: {
+    component: {
+      file: './components/summary.js'
+    },
+    template: {
+      file: './templates/summary.hbs'
+    }
+  },
   defaultColor: 'light-pink',
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
@@ -84,8 +92,8 @@ module.exports = {
   options: [
     {
       key: 'url',
-      name: 'GreyNoise Enterprise URL',
-      description: 'The URL path to the Enterprise GreyNoise API you wish to use.',
+      name: 'GreyNoise API URL',
+      description: 'The base URL to the GreyNoise API you wish to use. Defaults to "https://api.greynoise.io".',
       default: 'https://api.greynoise.io',
       type: 'text',
       userCanEdit: false,
@@ -95,9 +103,19 @@ module.exports = {
       key: 'apiKey',
       name: 'API Key',
       description:
-        'Accounts api key used to access GreyNoise Api.',
+        'Account API key used to access GreyNoise API.',
       default: '',
       type: 'password',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'subscriptionApi',
+      name: 'Search using the Subscription API',
+      description:
+          'If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)',
+      default: true,
+      type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
@@ -105,27 +123,8 @@ module.exports = {
       key: 'ignoreNonSeen',
       name: 'Ignore IPs that have not been seen',
       description:
-        'If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.',
+        'If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.',
       default: false,
-      type: 'boolean',
-      userCanEdit: true,
-      adminOnly: false
-    },
-    // {
-    //   key: 'ignoreRC1918Ip',
-    //   name: 'Ignore RFC1918 IPs',
-    //   description: 'Prevents RFC1918 IP addresses from being sent to the GreyNoise API for enrichment.',
-    //   default: false,
-    //   type: 'boolean',
-    //   userCanEdit: true,
-    //   adminOnly: false
-    // },
-    {
-      key: 'subscriptionApi',
-      name: 'Search using the Subscription API',
-      description:
-        'Search using the GreyNoise Subscription Based APIs.  When disabled, the GreyNoise Community API will be used (only supports IP lookups)',
-      default: true,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false

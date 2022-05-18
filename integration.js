@@ -1,16 +1,22 @@
 'use strict';
 
-const request = require('request');
+const request = require('postman-request');
 const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
 const _ = require('lodash/fp');
+const util = require('util');
 
 const MAX_PARALLEL_LOOKUPS = 10;
+const MAX_GN_TAGS = 2;
+
+// noise and seen properties are used interchangeably
+// noise/seen means the IP is an Internet Scanner
 
 let Logger;
 let requestWithDefaults;
+let requestWithDefaultsAsync;
 
 function startup(logger) {
   Logger = logger;
@@ -41,94 +47,120 @@ function startup(logger) {
   }
 
   requestWithDefaults = request.defaults(defaults);
+  requestWithDefaultsAsync = util.promisify(requestWithDefaults);
 }
 
 function doLookup(entities, options, cb) {
-  Logger.trace({ entities });
+  Logger.trace({ entities }, 'doLookup');
 
   if (options.subscriptionApi) {
-    useGreynoiseSubscriptionApi(entities, options, cb);
+    // subscription API searches both IPs and CVEs
+    const validIpsAndCves = getValidIpsAndCves(entities);
+    useGreynoiseSubscriptionApi(validIpsAndCves, options, cb);
   } else {
-    useGreynoiseCommunityApi(entities, options, cb);
+    // community api only searches IPs
+    const validIpEntities = getValidIps(entities);
+    useGreynoiseCommunityApi(validIpEntities, options, cb);
   }
 }
+
+/**
+ * Given an array of entity objects, only return valid IPs.  This ignores
+ * any CVEs that are passed to the integration as well as non-valid IPs
+ *
+ * @param entities
+ * @returns {*}
+ */
+const getValidIps = (entities) => {
+  return entities.reduce((accum, entity) => {
+    if (entity.isIP && isValidIp(entity)) {
+      accum.push(entity);
+    }
+    return accum;
+  }, []);
+};
+
+/**
+ * Given an array of entity objects, only return valid IPs and CVEs.
+ *
+ * @param entities
+ * @returns {*}
+ */
+const getValidIpsAndCves = (entities) => {
+  return entities.reduce((accum, entity) => {
+    if (entity.isIP && isValidIp(entity)) {
+      accum.push(entity);
+    } else if (entity.type === 'cve') {
+      accum.push(entity);
+    }
+    return accum;
+  }, []);
+};
 
 const useGreynoiseCommunityApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
-  let validSearch;
-  let validType;
-
-  if (!options.apiKey) {
-    throw new Error('Unauthorized: Please check your API key');
-  }
 
   entities.forEach((entity) => {
-    validSearch = isValidSearch(entity);
-    validType = entity;
+    let requestOptions = {
+      method: 'GET',
+      uri: options.url + '/v3/community/' + entity.value,
+      headers: {
+        key: options.apiKey,
+        'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
+      },
+      json: true
+    };
+
+    Logger.trace({ requestOptions }, 'request options');
+
+    tasks.push(function (done) {
+      requestWithDefaults(requestOptions, function (error, res, body) {
+        let processedResult = handleRestError(error, entity, res, body);
+
+        if (processedResult.error) {
+          done(processedResult);
+          return;
+        }
+
+        done(null, processedResult);
+      });
+    });
   });
 
-  if (validSearch && validType.type !== 'cve') {
-    entities.forEach((entity) => {
-      let requestOptions = {
-        method: 'GET',
-        uri: options.url + '/v3/community/' + entity.value,
-        headers: {
-          key: options.apiKey,
-          'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
-        },
-        json: true
-      };
+  async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
+    if (err) {
+      Logger.error({ err: err }, 'Error');
+      cb(err);
+      return;
+    }
 
-      Logger.trace({ requestOptions }, 'request options');
-
-      tasks.push(function (done) {
-        requestWithDefaults(requestOptions, function (error, res, body) {
-          let processedResult = handleRestError(error, entity, res, body);
-
-          if (processedResult.error) {
-            done(processedResult);
-            return;
-          }
-
-          done(null, processedResult);
+    results.forEach((result) => {
+      Logger.trace({ result }, 'Community Result');
+      if ((result.body === null || result.body.length === 0) && options.ignoreNonSeen) {
+        lookupResults.push({
+          entity: result.entity,
+          data: null
         });
-      });
-    });
-
-    async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-      if (err) {
-        Logger.error({ err: err }, 'Error');
-        cb(err);
-        return;
-      }
-
-      results.forEach((result) => {
-        if (options.maliciousOnly === true && getIsMalicious(result) === false) return;
-
-        if (result.body === null || result.body.length === 0) {
-          lookupResults.push({
-            entity: result.entity,
-            data: null
-          });
-        } else {
-          result.body.apiService = 'community';
-          lookupResults.push({
-            entity: result.entity,
-            data: {
-              summary: setSummmaryTags(result, 'community'),
-              details: result.body
+      } else {
+        lookupResults.push({
+          entity: result.entity,
+          data: {
+            summary: getCommunitySummaryTags(result.body),
+            details: {
+              ...result.body,
+              apiService: 'community',
+              usingApiKey: options.apiKey ? true : false,
+              hasResult: result.body !== null
             }
-          });
-        }
-      });
-
-      Logger.debug({ lookupResults }, 'Results');
-      cb(null, lookupResults);
+          }
+        });
+      }
     });
-  } else {
-    cb(null, [{ entity: validType, data: null, return_to_client: true }]);
-  }
+
+    Logger.debug({ lookupResults }, 'Results');
+    cb(null, lookupResults);
+  });
 };
 
 function handleRestError(error, entity, res, body) {
@@ -182,14 +214,6 @@ function handleRestError(error, entity, res, body) {
   return result;
 }
 
-function getIsMalicious(result) {
-  if (result.body && result.body.classification && result.body.classification === 'malicious') {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 const useGreynoiseSubscriptionApi = (entities, options, cb) => {
   let lookupResults = [];
   let tasks = [];
@@ -213,63 +237,72 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
 
     results.forEach((result) => {
       if (result.entity.type === 'cve') {
-        if (result && !result.body && !result.body.data) {
-          lookupResults.push({
-            entity: result.entity,
-            data: null
-          });
-        } else if (result && result.body && result.body.data) {
-          result.body.apiService = 'subscription';
+        Logger.trace({ result }, 'CVE Result');
+        if (result && result.body && result.body.data) {
           lookupResults.push({
             entity: result.entity,
             data: {
-              summary: setSummmaryTags(result, 'subscription'),
-              details: { ...result.body, ...result.rBody, ...result.statBody }
+              summary: getSubscriptionSummaryTags(result),
+              details: {
+                ...result.body,
+                ...result.rBody,
+                ...result.statBody,
+                hasResult: true,
+                apiService: 'subscription'
+              }
             }
           });
         } else {
           lookupResults.push({
             entity: result.entity,
-            data: {
-              summary: ['IP address has not been seen'],
-              details: null
-            }
+            data: null
           });
         }
       }
 
-      if (result.entity.type === 'IPv4' || result.entity.type === 'IPv6') {
-        if (result && !result.data && result.return_to_client) {
-          // this response is for the case of ignoring RFC1918 ips.
-          lookupResults.push({
-            entity: result.entity,
-            data: null
-          });
-        } else if (result && result.rBody) {
-          result.body.apiService = 'subscription';
+      if (result.entity.type === 'IPv4') {
+        if (result && result.rBody) {
           lookupResults.push({
             entity: result.entity,
             data: {
-              summary: setSummmaryTags(result, 'subscription'),
-              details: { ...result.body, ...result.rBody, ...result.statBody }
+              summary: getSubscriptionSummaryTags(result),
+              details: {
+                ...result.body,
+                ...result.rBody,
+                ...result.statBody,
+                apiService: 'subscription',
+                hasResult: true
+              }
             }
           });
         } else if (result && result.body && result.body.seen) {
-          result.body.apiService = 'subscription';
           lookupResults.push({
             entity: result.entity,
             data: {
-              summary: setSummmaryTags(result, 'subscription'),
-              details: { ...result.body, ...result.rBody, ...result.statBody }
+              summary: getSubscriptionSummaryTags(result),
+              details: {
+                ...result.body,
+                ...result.rBody,
+                ...result.statBody,
+                apiService: 'subscription',
+                hasResult: true
+              }
+            }
+          });
+        } else if (!options.ignoreNonSeen) {
+          lookupResults.push({
+            entity: result.entity,
+            data: {
+              summary: ['IP address has not been seen'],
+              details: {
+                hasResult: false
+              }
             }
           });
         } else {
           lookupResults.push({
             entity: result.entity,
-            data: {
-              summary: ['IP address has not been seen'],
-              details: null
-            }
+            data: null
           });
         }
       }
@@ -279,11 +312,40 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
   });
 };
 
+const runMultiQuickLookup = async (ipEntities, options) => {
+  const requestOptions = {
+    method: 'post',
+    headers: {
+      key: options.apiKey,
+      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+    },
+    data: {
+      ips: ipEntities.map((entity) => entity.value)
+    },
+    json: true
+  };
+
+  const { statusCode, body } = await requestWithDefaultsAsync(requestOptions);
+};
+
 const getIpData = (entity, options, done) => {
-  if (isValidSearch(entity)) {
-    let noiseContextRequestOptions = {
+  let noiseContextRequestOptions = {
+    method: 'GET',
+    uri: options.url + '/v2/noise/context/' + entity.value,
+    headers: {
+      key: options.apiKey,
+      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+    },
+    json: true
+  };
+
+  requestWithDefaults(noiseContextRequestOptions, function (ncHttpError, ncRes, ncBody) {
+    if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
+
+    Logger.trace({ ncBody, ncStatusCode: ncRes ? ncRes.statusCode : 'N/A' }, 'Noise Context');
+    let riotIpRequestOptions = {
       method: 'GET',
-      uri: options.url + '/v2/noise/context/' + entity.value,
+      uri: `${options.url}/v2/riot/${entity.value}`,
       headers: {
         key: options.apiKey,
         'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
@@ -291,66 +353,50 @@ const getIpData = (entity, options, done) => {
       json: true
     };
 
-    requestWithDefaults(noiseContextRequestOptions, function (ncHttpError, ncRes, ncBody) {
-      if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
+    requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
+      if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
+      processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
+        if (ncError) return done(ncError);
 
-      let riotIpRequestOptions = {
-        method: 'GET',
-        uri: `${options.url}/v2/riot/${entity.value}`,
-        headers: {
-          key: options.apiKey,
-          'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-        },
-        json: true
-      };
+        let result, error;
 
-      requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
-        if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
-        processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
-          if (ncError) return done(ncError);
-
-          let result, error;
-
-          if (rRes.statusCode === 200) {
-            if (!rBody.riot) {
-              // cache these as a miss
-              result = ncResult;
-            } else {
-              result = {
-                ...ncResult,
-                rBody: rBody
-              };
-            }
-          } else if ([400, 404].includes(rRes.statusCode)) {
+        if (rRes.statusCode === 200) {
+          if (!rBody.riot) {
+            // cache these as a miss
             result = ncResult;
-          } else if (rRes.statusCode === 429) {
-            error = {
-              ...ncResult,
-              rBody: rBody,
-              detail: "Too many requests.  You've hit the rate limit"
-            };
-          } else if (rRes.statusCode === 401) {
-            error = {
-              ...ncResult,
-              rBody: rBody,
-              detail: 'Unauthorized: Please check your API key'
-            };
           } else {
-            // unexpected response received
-            error = {
+            result = {
               ...ncResult,
-              rBody: rBody,
-              detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
+              rBody: rBody
             };
           }
+        } else if ([400, 404].includes(rRes.statusCode)) {
+          result = ncResult;
+        } else if (rRes.statusCode === 429) {
+          error = {
+            ...ncResult,
+            rBody: rBody,
+            detail: "Too many requests.  You've hit the rate limit"
+          };
+        } else if (rRes.statusCode === 401) {
+          error = {
+            ...ncResult,
+            rBody: rBody,
+            detail: 'Unauthorized: Please check your API key'
+          };
+        } else {
+          // unexpected response received
+          error = {
+            ...ncResult,
+            rBody: rBody,
+            detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
+          };
+        }
 
-          done(error, result);
-        });
+        done(error, result);
       });
     });
-  } else {
-    done(null, { entity, data: null, return_to_client: true });
-  }
+  });
 };
 
 const processNoiseContextRequestResult = (entity, options, res, body, done) => {
@@ -383,7 +429,7 @@ const processNoiseContextRequestResult = (entity, options, res, body, done) => {
   } else if (res.statusCode === 401) {
     error = {
       body,
-      detail: 'Unauthorized: Please check your API key'
+      detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
     };
   } else {
     // unexpected response received
@@ -511,114 +557,131 @@ const isLinkLocalAddress = (entity) => {
   return entity.startsWith('169');
 };
 
-const checkIfPrivateIP = (entity) => {
+const isPrivateIP = (entity) => {
   return entity.isPrivateIP === true;
 };
 
-const isValidSearch = (entity) => {
-  const isLoopbackOrLinkLocalIp = [isLoopBackIp(entity.value), isLinkLocalAddress(entity.value)].some(
-    (item) => item === true
-  );
-  const isPrivateIp = checkIfPrivateIP(entity);
-
-  if (isLoopbackOrLinkLocalIp || isPrivateIp) {
-    return false;
-  } else {
-    return true;
-  }
+const isValidIp = (entity) => {
+  return !(isLoopBackIp(entity.value) || isLinkLocalAddress(entity.value) || isPrivateIP(entity));
 };
 
-const setSummmaryTags = (data, version) => {
+const getCommunitySummaryTags = (data) => {
+  let tags = [];
+
+  if (!data) {
+    return ['Has not been seen'];
+  }
+
+  if (data.noise) {
+    tags.push(`Classification: ${data.classification}`);
+    tags.push('Internet scanner');
+  }
+
+  if (data.riot) {
+    // RIOT tags are done in green
+    tags.push(`Classification: RIOT`);
+  }
+
+  if (data.name && data.name !== 'unknown') {
+    tags.push(`Name: ${data.name}`);
+  }
+
+  return tags;
+};
+
+const getSubscriptionSummaryTags = (data) => {
   let tags = [];
   // subscription non-riot
-  if (version === 'subscription') {
+
+  if (data.body) {
+    if (data.body.seen) {
+      tags.push(`Classification: ${data.body.classification}`);
+      tags.push('Internet scanner');
+    }
     if (data.body) {
-      if (data.body.seen) {
-        tags.push(`Classification: ${data.body.classification}`);
-        tags.push(`Noise`);
-      }
-      if (data.body && data.body.metadata) {
-        if (data.body.bot) tags.push(`BOT: ${data.body.bot}`);
+      if (data.body.bot)
+        tags.push({
+          icon: 'robot',
+          text: 'bot'
+        });
 
-        if (data.body.vpn) tags.push(`VPN: ${data.body.vpn}`);
-
-        if (data.body.metadata.country) {
-          tags.push(`Country: ${data.body.metadata.country}`);
-        }
-        if (data.body.metadata.tor) {
-          tags.push(`TOR exit node`);
-        }
-        if (data.body.metadata.organization) {
-          tags.push(`Org: ${data.body.metadata.organization}`);
-        }
-      }
-
-      if (data.body.tags && data.body.tags.length) {
-        const tagLength = data.body.tags.length;
-        if (tagLength === 1) {
-          tags.push(`GN Tags: ${data.body.tags}`);
-        } else {
-          const firstItem = data.body.tags[0];
-
-          tags.push(`GN Tags: ${firstItem} +${tagLength - 1} more tags`);
-        }
-      }
-
-      if (data.body && data.body.actor) {
-        if (data.body.actor !== 'unknown') {
-          tags.push(`GN Actor: ${data.body.actor}`);
-        }
+      if (data.body.vpn) {
+        tags.push({
+          icon: 'shield-alt',
+          text: 'VPN'
+        });
       }
     }
 
-    if (data.rBody) {
-      if (data.rBody.riot) {
-        tags.push(`Classification: RIOT`);
-        tags.push(`RIOT`);
-        if (data.rBody.trust_level) {
+    if (data.body && data.body.metadata) {
+      if (data.body.metadata.tor) {
+        tags.push(`TOR exit node`);
+      }
+      if (data.body.metadata.organization) {
+        tags.push(`Org: ${data.body.metadata.organization}`);
+      }
+    }
+
+    if (data.body && Array.isArray(data.body.tags) && data.body.tags.length > 0) {
+      for(let i=0; i<data.body.tags.length && i < MAX_GN_TAGS; i++){
+        tags.push(`${data.body.tags[i]}`);
+      }
+
+      if(data.body.tags.length > MAX_GN_TAGS){
+        tags.push(`+${data.body.tags.length - MAX_GN_TAGS} tags`);
+      }
+    }
+
+    if (data.body && data.body.actor) {
+      if (data.body.actor !== 'unknown') {
+        tags.push(`Actor: ${data.body.actor}`);
+      }
+    }
+  }
+
+  if (data.rBody) {
+    if (data.rBody.riot) {
+      tags.push({
+        type: 'RIOT',
+        text: `Classification: RIOT`
+      });
+
+      if (data.rBody.trust_level) {
+        if (data.rBody.trust_level === '1') {
+          tags.push(`Trust Level: 1 - Reasonably Ignore`);
+        } else if (data.rBody.trust_level === '2') {
+          tags.push(`Trust Level: 2 - Commonly Seen`);
+        } else {
           tags.push(`Trust Level: ${data.rBody.trust_level}`);
         }
       }
-    }
 
-    if (data.entity.type === 'cve') {
-      if (data.statBody.stats) {
-        if (data.statBody.stats && data.statBody.stats.countries) {
-          tags.push(
-            `Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`
-          );
-        }
-
-        if (data.statBody.stats && data.statBody.stats.tags) {
-          tags.push(`Top Tag: ${data.statBody.stats.tags[0].tag} (${data.statBody.stats.tags.length})`);
-        }
-
-        if (data.statBody.stats.classifications) {
-          data.statBody.stats.classifications.forEach((classification) => {
-            if (classification.classification === 'malicious') {
-              tags.push(`Malicious: ${classification.count}`);
-            }
-          });
-        }
+      if (data.rBody.name) {
+        tags.push(data.rBody.name);
       }
     }
   }
 
-  if (version === 'community') {
-    if (data.body) {
-      if (data.body.noise) {
-        tags.push(`Classification: ${data.body.classification}`);
-        tags.push(`Noise`);
-      }
-    }
-    if (data.body.riot) {
-      tags.push(`Classification: RIOT`);
-      // tags.push(`RIOT`);
+  if (data.entity.type === 'cve') {
+    if (data.body.count === 0) {
+      tags.push('No Associated IP addresses');
     }
 
-    if (data.body.name) {
-      if (data.body.name !== 'unknown') {
-        tags.push(`Name: ${data.body.name}`);
+    if (data.statBody.stats) {
+      if (data.statBody.stats && data.statBody.stats.countries) {
+        tags.push(`Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`);
+      }
+
+      if (data.statBody.stats && data.statBody.stats.tags) {
+        tags.push(`Top Tag: ${data.statBody.stats.tags[0].tag} (${data.statBody.stats.tags.length})`);
+      }
+
+      if (data.statBody.stats.classifications) {
+        data.statBody.stats.classifications.forEach((classification) => {
+          if (classification.classification === 'malicious') {
+            tags.push(`Malicious: ${classification.count}`);
+          }
+        });
       }
     }
   }
@@ -627,12 +690,18 @@ const setSummmaryTags = (data, version) => {
 };
 
 function validateOptions(userOptions, cb) {
-  const urlError =
-    userOptions.url.value && userOptions.url.value.endsWith('/')
-      ? [{ key: 'url', message: 'Your Url must not end with "/".' }]
-      : [];
+  const errors = [];
 
-  cb(null, urlError);
+  if (
+      userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0
+  ) {
+    errors.push({
+      key: 'apiKey',
+      message: 'You must provide a GreyNoise API key if using the subscription API'
+    });
+  }
+
+  cb(null, errors);
 }
 
 module.exports = {

@@ -2,6 +2,16 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
   tags: Ember.computed.alias('details.tags'),
+  trustLevel: Ember.computed('details.trust_level', function(){
+    let trustLevel = this.get('details.trust_level');
+    if(trustLevel === "1"){
+      return '1 - Reasonably Ignore';
+    }
+    if(trustLevel === "2"){
+      return '2 - Commonly Seen'
+    }
+    return trustLevel;
+  }),
   showTags: [],
   showAllTags: true,
   rawDataOpen: false,
