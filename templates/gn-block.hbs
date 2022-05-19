@@ -17,35 +17,43 @@
 
       {{#if (eq block._state.activeTab "info")}}
         <h1 class="p-title">{{fa-icon "clipboard" fixedWidth=true}} Summary</h1>
-        <span>
-          {{#if details.riot}}
+
+          {{#if (and details.riot (not details.seen))}}
             <span>
               The IP <strong>{{block.entity.value}}</strong> has not been observed scanning the internet by GreyNoise.
               It is part of the <strong>RIOT</strong> project, which identifies IPs from known benign services and organizations that
               commonly cause false positives in network security and threat intelligence products.
             </span>
-          {{else}}
-            {{#if (eq details.classification "unknown")}}
-              The IP <strong>{{block.entity.value}}</strong> has an <strong>unknown</strong> classification
-            {{else}}
-              The IP <strong>{{block.entity.value}}</strong> is classified as <strong>{{details.classification}}</strong>
-            {{/if}}
-            {{#if details.seen}}
-              and was last observed scanning the GreyNoise sensor network on <strong>{{details.last_seen}}</strong>.
-            {{else}}
-              and has not been observed scanning the GreyNoise sensor network.
-            {{/if}}
-            {{#if (eq details.classification "benign")}}
-              A benign classification means GreyNoise has identified the actor (<strong>{{details.actor}}</strong>) to be a legitimate company that is not malicious in nature.
-            {{/if}}
-            {{#if (eq details.classification "malicious")}}
-              GreyNoise classified the IP as malicious because it is not classified as benign and has one or more malicious tags associated with it. It is still considered Internet background noise since it is scanning the entire Internet and NOT targeting you specifically.
-            {{/if}}
-            {{#if (eq details.classification "unknown")}}
-              GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has unknown intent.  It is still considered Internet background noise since it is scanning the entire internet and NOT targeting you specifically.
-            {{/if}}
+          {{else if details.riot}}
+            <span>
+              The IP <strong>{{block.entity.value}}</strong> is part of the <strong>RIOT</strong> project, which identifies IPs from known benign services and organizations that
+              commonly cause false positives in network security and threat intelligence products.
+            </span>
           {{/if}}
-        </span>
+          {{#if details.seen}}
+            <div class="{{if details.riot 'mt-2'}}">
+              {{#if (eq details.classification "unknown")}}
+                The IP {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}} has an <strong>unknown</strong> classification
+              {{else}}
+                The IP {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}} is classified as <strong>{{details.classification}}</strong>
+              {{/if}}
+              {{#if details.seen}}
+                and was last observed scanning the GreyNoise sensor network on <strong>{{details.last_seen}}</strong>.
+              {{else}}
+                and has not been observed scanning the GreyNoise sensor network.
+              {{/if}}
+              {{#if (eq details.classification "benign")}}
+                A benign classification means GreyNoise has identified the actor (<strong>{{details.actor}}</strong>) to be a legitimate company that is not malicious in nature.
+              {{/if}}
+              {{#if (eq details.classification "malicious")}}
+                GreyNoise classified the IP as malicious because it is not classified as benign and has one or more malicious tags associated with it. It is still considered Internet background noise since it is scanning the entire Internet and NOT targeting you specifically.
+              {{/if}}
+              {{#if (eq details.classification "unknown")}}
+                GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has unknown intent.  It is still considered Internet background noise since it is scanning the entire internet and NOT targeting you specifically.
+              {{/if}}
+            </div>
+          {{/if}}
+
         {{#if details.metadata.tor}}
           <h1 class="p-title">{{fa-icon icon="user-secret" fixedWidth=true}} Tor Exit Node</h1>
           <div>
@@ -337,7 +345,8 @@
         {{/if}}
       {{/if}}
     {{/if}}
-    {{!-- CVE (Enerprise Only) --}}
+
+    {{!-- CVE (Subscription Only) --}}
     {{#if details.stats}}
       {{#if (and details.data.length (eq block.entity.type 'cve'))}}
         <div>
@@ -346,12 +355,6 @@
           </a>
         </div>
       {{/if}}
-      {{#unless (or details.seen details.riot details.data)}}
-        {{#if (eq block.entity.type 'cve')}}
-          <span>No IP Addresses have been associated with this CVE</span>
-        {{/if}}
-      {{/unless}}
-
       {{#if (and details.stats.countries details.stats.countries.length)}}
         <h1 class='p-title'>
           {{fa-icon 'globe' fixedWidth=true}}
@@ -378,15 +381,15 @@
         {{/each}}
       {{/if}}
 
-      {{#if (and details.stats.spoofable details.stats.spoofable.length)}}
+      {{#if (and details.stats.actors details.stats.actors.length)}}
         <h1 class='p-title'>
           {{fa-icon 'user-secret' fixedWidth=true}}
-          Spoofable
+          Actors
         </h1>
-        {{#each details.stats.spoofable as |spoofable|}}
+        {{#each details.stats.actors as |actor|}}
           <div>
-            <span class='p-key'>{{if spoofable.spoofable 'True' 'False'}}: </span>
-            <span class='p-value'>{{spoofable.count}}</span>
+            <span class='p-key'>{{actor.actor}}: </span>
+            <span class='p-value'>{{actor.count}}</span>
           </div>
         {{/each}}
       {{/if}}
@@ -396,12 +399,25 @@
           {{fa-icon 'tag' fixedWidth=true}}
           Tags
         </h1>
-        {{#each details.stats.tags as |tag|}}
-          <div>
-            <span class='p-key'>{{tag.tag}}: </span>
-            <span class='p-value'>{{tag.count}}</span>
-          </div>
-        {{/each}}
+        <div class='tags'>
+          {{#each tagsToShow as |tag|}}
+            <span class="category-pill">
+              <span class="category">
+                {{tag.tag}}
+              </span>
+              <span class="category-count">
+                {{tag.count}}
+              </span>
+            </span>
+          {{/each}}
+          {{#if (gt details.stats.tags.length maxInitialTagsToShow)}}
+            {{#if block._state.showAllTags}}
+              <div class="p-action mt-1" {{action 'toggleShowTags'}}>Show fewer tags {{fa-icon icon='caret-up' fixedWidth=true}}</div>
+            {{else}}
+              <div class="p-action mt-1" {{action 'toggleShowTags'}}>Show all tags {{fa-icon 'caret-down' fixedWidth=true}}</div>
+            {{/if}}
+          {{/if}}
+        </div>
       {{/if}}
 
       {{#if (and details.stats.operating_systems details.stats.operating_systems.length)}}
@@ -413,6 +429,19 @@
           <div>
             <span class='p-key'>{{operating_system.operating_system}}: </span>
             <span class='p-value'>{{operating_system.count}}</span>
+          </div>
+        {{/each}}
+      {{/if}}
+
+      {{#if (and details.stats.spoofable details.stats.spoofable.length)}}
+        <h1 class='p-title'>
+          {{fa-icon 'user-secret' fixedWidth=true}}
+          Spoofable
+        </h1>
+        {{#each details.stats.spoofable as |spoofable|}}
+          <div>
+            <span class='p-key'>{{if spoofable.spoofable 'True' 'False'}}: </span>
+            <span class='p-value'>{{spoofable.count}}</span>
           </div>
         {{/each}}
       {{/if}}
@@ -629,32 +658,40 @@
       {{/if}}
       <span class='p-title'>{{fa-icon 'clipboard' fixedWidth=true}} GreyNoise Community Summary</span>
       <div class="mb-2">
-        {{#if details.riot}}
+        {{#if (and details.riot (not details.noise))}}
           <span>
-            The IP <strong>{{block.entity.value}}</strong> has not been observed scanning the internet by GreyNoise.
-            It is part of the <strong>RIOT</strong> project, which identifies IPs from known benign services and organizations that
-            commonly cause false positives in network security and threat intelligence products.
-          </span>
-        {{else}}
-          {{#if (eq details.classification "unknown")}}
-            The IP <strong>{{block.entity.value}}</strong> has an <strong>unknown</strong> classification
-          {{else}}
-            The IP <strong>{{block.entity.value}}</strong> is classified as <strong>{{details.classification}}</strong>
-          {{/if}}
-          {{#if details.noise}}
-            and was last observed scanning the GreyNoise sensor network on <strong>{{details.last_seen}}</strong>.
-          {{else}}
-            and has not been observed scanning the GreyNoise sensor network.
-          {{/if}}
-          {{#if (eq details.classification "benign")}}
-            A benign classification means GreyNoise has identified the actor (<strong>{{details.name}}</strong>) to be a legitimate company that is not malicious in nature.
-          {{/if}}
-          {{#if (eq details.classification "malicious")}}
-            GreyNoise classified the IP as malicious because it is not classified as benign and has one or more malicious tags associated with it. It is still considered Internet background noise since it is scanning the entire Internet and NOT targeting you specifically.
-          {{/if}}
-          {{#if (eq details.classification "unknown")}}
-            GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has unknown intent.  It is still considered Internet background noise since it is scanning the entire internet and NOT targeting you specifically.
-          {{/if}}
+              The IP <strong>{{block.entity.value}}</strong> has not been observed scanning the internet by GreyNoise.
+              It is part of the <strong>RIOT</strong> project, which identifies IPs from known benign services and organizations that
+              commonly cause false positives in network security and threat intelligence products.
+            </span>
+        {{else if details.riot}}
+          <span>
+              The IP <strong>{{block.entity.value}}</strong> is part of the <strong>RIOT</strong> project, which identifies IPs from known benign services and organizations that
+              commonly cause false positives in network security and threat intelligence products.
+            </span>
+        {{/if}}
+        {{#if details.noise}}
+          <div class="{{if details.riot 'mt-2'}}">
+            {{#if (eq details.classification "unknown")}}
+              The IP {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}} has an <strong>unknown</strong> classification
+            {{else}}
+              The IP {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}} is classified as <strong>{{details.classification}}</strong>
+            {{/if}}   gmail.com
+            {{#if details.noise}}
+              and was last observed scanning the GreyNoise sensor network on <strong>{{details.last_seen}}</strong>.
+            {{else}}
+              and has not been observed scanning the GreyNoise sensor network.
+            {{/if}}
+            {{#if (eq details.classification "benign")}}
+              A benign classification means GreyNoise has identified the actor (<strong>{{details.name}}</strong>) to be a legitimate company that is not malicious in nature.
+            {{/if}}
+            {{#if (eq details.classification "malicious")}}
+              GreyNoise classified the IP as malicious because it is not classified as benign and has one or more malicious tags associated with it. It is still considered Internet background noise since it is scanning the entire Internet and NOT targeting you specifically.
+            {{/if}}
+            {{#if (eq details.classification "unknown")}}
+              GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has unknown intent.  It is still considered Internet background noise since it is scanning the entire internet and NOT targeting you specifically.
+            {{/if}}
+          </div>
         {{/if}}
       </div>
       <h1 class='p-title'>

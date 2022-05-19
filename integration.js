@@ -238,15 +238,13 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
     results.forEach((result) => {
       if (result.entity.type === 'cve') {
         Logger.trace({ result }, 'CVE Result');
-        if (result && result.body && result.body.data) {
+        if (result && result.stats) {
           lookupResults.push({
             entity: result.entity,
             data: {
-              summary: getSubscriptionSummaryTags(result),
+              summary: getCveSummaryTags(result),
               details: {
-                ...result.body,
-                ...result.rBody,
-                ...result.statBody,
+                stats: result.stats,
                 hasResult: true,
                 apiService: 'subscription'
               }
@@ -443,11 +441,11 @@ const processNoiseContextRequestResult = (entity, options, res, body, done) => {
 };
 
 const getCveData = (entity, options, done) => {
-  const gnqlRequestOptions = {
+  const gnqlStatsRequestOptions = {
     method: 'GET',
-    uri: `${options.url}/v2/experimental/gnql`,
+    uri: `${options.url}/v2/experimental/gnql/stats`,
     qs: {
-      size: 10,
+      //count: 3,
       query: `cve:${entity.value}`
     },
     headers: {
@@ -456,93 +454,39 @@ const getCveData = (entity, options, done) => {
     },
     json: true
   };
-  requestWithDefaults(gnqlRequestOptions, function (httpError, res, body) {
-    if (httpError) return done({ detail: 'Unexpected GNQL Query HTTP request error', httpError });
-
-    const gnqlStatsRequestOptions = {
-      method: 'GET',
-      uri: `${options.url}/v2/experimental/gnql/stats`,
-      qs: {
-        count: 3,
-        query: `cve:${entity.value}`
-      },
-      headers: {
-        key: options.apiKey,
-        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-      },
-      json: true
-    };
-    requestWithDefaults(gnqlStatsRequestOptions, function (shttpError, sRes, sBody) {
-      if (shttpError) return done({ detail: 'Unexpected GNQL Stats Query HTTP request error', shttpError });
-
-      processGnqlRequestResult(entity, options, res, body, (error, gnqlResult) => {
-        if (error) return done(error);
-        processGnqlStatsRequestResults(options, sRes, sBody, gnqlResult, done);
-      });
-    });
+  requestWithDefaults(gnqlStatsRequestOptions, function (err, response, body) {
+    if (err) return done({ detail: 'Unexpected GNQL Stats Query HTTP request error', err });
+    processGnqlStatsRequestResults(response, body, entity, options, done);
   });
 };
 
-const processGnqlRequestResult = (entity, options, res, body, done) => {
+const processGnqlStatsRequestResults = (response, body, entity, options, done) => {
   let result = {};
   let error = null;
 
-  if (res.statusCode === 200) {
-    if (options.ignoreNonSeen && body.count === 0) {
-      result = { entity, body: null };
+  if (response.statusCode === 200) {
+    if (body.count === 0) {
+      result = { entity };
     } else {
-      result = { entity, body };
+      result = { entity, stats: body.stats };
     }
-  } else if (res.statusCode === 400) {
-    result = { entity, body: null };
-  } else if (res.statusCode === 429) {
+  } else if (response.statusCode === 400) {
+    result = { body };
+  } else if (response.statusCode === 429) {
     error = {
       body,
-      detail: "Too many requests.  You've hit the rate limit"
+      detail: body && body.message ? body.message : "Too many requests.  You've hit the rate limit"
     };
-  } else if (res.statusCode === 401) {
+  } else if (response.statusCode === 401) {
     error = {
       body,
-      detail: 'Unauthorized: Please check your API key'
+      detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
     };
   } else {
     // unexpected response received
     error = {
       body,
-      detail: `Unexpected HTTP status code [${res.statusCode}] received`
-    };
-  }
-
-  done(error, result);
-};
-
-const processGnqlStatsRequestResults = (options, res, statBody, gnqlResult, done) => {
-  let result = {};
-  let error = null;
-
-  if (res.statusCode === 200) {
-    if (options.ignoreNonSeen && statBody.count === 0) {
-      result = { ...gnqlResult };
-    } else {
-      result = { ...gnqlResult, statBody };
-    }
-  } else if (res.statusCode === 400) {
-    result = { ...gnqlResult };
-  } else if (res.statusCode === 429) {
-    error = {
-      statBody,
-      detail: "Too many requests.  You've hit the rate limit"
-    };
-  } else if (res.statusCode === 401) {
-    error = {
-      statBody,
-      detail: 'Unauthorized: Please check your API key'
-    };
-  } else {
-    // unexpected response received
-    error = {
-      statBody,
-      detail: `Unexpected HTTP status code [${res.statusCode}] received`
+      detail: body && body.message ? body.message : `Unexpected HTTP status code [${response.statusCode}] received`
     };
   }
 
@@ -623,7 +567,7 @@ const getSubscriptionSummaryTags = (data) => {
       if (data.body.metadata.tor) {
         tags.push({
           icon: 'user-secret',
-         text: 'TOR'
+          text: 'TOR'
         });
       }
       if (data.body.metadata.organization) {
@@ -673,32 +617,30 @@ const getSubscriptionSummaryTags = (data) => {
     }
   }
 
-  if (data.entity.type === 'cve') {
-    if (data.body.count === 0) {
-      tags.push('No Associated IP addresses');
-    }
-
-    if (data.statBody.stats) {
-      if (data.statBody.stats && data.statBody.stats.countries) {
-        tags.push(`Top Country: ${data.statBody.stats.countries[0].country} (${data.statBody.stats.countries.length})`);
-      }
-
-      if (data.statBody.stats && data.statBody.stats.tags) {
-        tags.push(`Top Tag: ${data.statBody.stats.tags[0].tag} (${data.statBody.stats.tags.length})`);
-      }
-
-      if (data.statBody.stats.classifications) {
-        data.statBody.stats.classifications.forEach((classification) => {
-          if (classification.classification === 'malicious') {
-            tags.push(`Malicious: ${classification.count}`);
-          }
-        });
-      }
-    }
-  }
-
   return _.uniq(tags);
 };
+
+function getCveSummaryTags(data) {
+  const tags = [];
+  if (data.stats) {
+    if (data.stats && data.stats.countries) {
+      tags.push(`Top Country: ${data.stats.countries[0].country} (${data.stats.countries[0].count})`);
+    }
+
+    if (data.stats && data.stats.tags) {
+      tags.push(`Top Tag: ${data.stats.tags[0].tag} (${data.stats.tags[0].count})`);
+    }
+
+    if (data.stats.classifications) {
+      data.stats.classifications.forEach((classification) => {
+        if (classification.classification === 'malicious') {
+          tags.push(`Malicious: ${classification.count}`);
+        }
+      });
+    }
+  }
+  return tags;
+}
 
 function validateOptions(userOptions, cb) {
   const errors = [];

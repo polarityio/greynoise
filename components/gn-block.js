@@ -16,10 +16,16 @@ polarity.export = PolarityComponent.extend({
   maxInitialTagsToShow: 15,
   expandableTitleStates: {},
   tagsToShow: Ember.computed('block._state.showAllTags', function () {
-    if (this.get('block._state.showAllTags')) {
-      return this.get('tags');
+    let tags;
+    if (this.get('block.entity.type') === 'cve') {
+      tags = this.get('details.stats.tags');
+    } else {
+      tags = this.get('tags');
     }
-    return this.get('tags').slice(0, this.maxInitialTagsToShow);
+    if (this.get('block._state.showAllTags')) {
+      return tags;
+    }
+    return tags.slice(0, this.maxInitialTagsToShow);
   }),
   init() {
     const rawDataLength =
