@@ -3,8 +3,8 @@ The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan
 
 Sign up for a free GreyNoise Community API key here https://viz.greynoise.io/signup
 
-| ![](assets/riot.png) |![](/assets/tor.png)|![](assets/activity.png)
-|---|---|--|
+| ![](assets/riot.png) |![](/assets/tor.png)|![](assets/activity.png)|
+|---|---|---|
 |*RIOT IP Address* |*Internet Scanner IP*| *Observed Activity*|
 
 To learn more about GreyNoise, please visit the [official website](https://greynoise.io).
