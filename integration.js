@@ -10,6 +10,7 @@ const util = require('util');
 
 const MAX_PARALLEL_LOOKUPS = 10;
 const MAX_GN_TAGS = 2;
+const USER_AGENT = `greynoise-polarity-integration-v${packageVersion}`;
 
 // noise and seen properties are used interchangeably
 // noise/seen means the IP is an Internet Scanner
@@ -50,35 +51,23 @@ function startup(logger) {
   requestWithDefaultsAsync = util.promisify(requestWithDefaults);
 }
 
-function doLookup(entities, options, cb) {
+async function doLookup(entities, options, cb) {
   Logger.trace({ entities }, 'doLookup');
+  const { validIps, validCves } = getValidIpsAndCves(entities);
 
   if (options.subscriptionApi) {
     // subscription API searches both IPs and CVEs
-    const validIpsAndCves = getValidIpsAndCves(entities);
-    useGreynoiseSubscriptionApi(validIpsAndCves, options, cb);
+    try {
+      await useGreynoiseSubscriptionApi(validIps, validCves, options, cb);
+    } catch (error) {
+      Logger.error(error);
+      cb(errorToPojo(error));
+    }
   } else {
     // community api only searches IPs
-    const validIpEntities = getValidIps(entities);
-    useGreynoiseCommunityApi(validIpEntities, options, cb);
+    useGreynoiseCommunityApi(validIps, options, cb);
   }
 }
-
-/**
- * Given an array of entity objects, only return valid IPs.  This ignores
- * any CVEs that are passed to the integration as well as non-valid IPs
- *
- * @param entities
- * @returns {*}
- */
-const getValidIps = (entities) => {
-  return entities.reduce((accum, entity) => {
-    if (entity.isIP && isValidIp(entity)) {
-      accum.push(entity);
-    }
-    return accum;
-  }, []);
-};
 
 /**
  * Given an array of entity objects, only return valid IPs and CVEs.
@@ -87,14 +76,18 @@ const getValidIps = (entities) => {
  * @returns {*}
  */
 const getValidIpsAndCves = (entities) => {
-  return entities.reduce((accum, entity) => {
+  const validIps = [];
+  const validCves = [];
+
+  entities.forEach((entity) => {
     if (entity.isIP && isValidIp(entity)) {
-      accum.push(entity);
+      validIps.push(entity);
     } else if (entity.type === 'cve') {
-      accum.push(entity);
+      validCves.push(entity);
     }
-    return accum;
-  }, []);
+  });
+
+  return { validIps, validCves };
 };
 
 const useGreynoiseCommunityApi = (entities, options, cb) => {
@@ -107,7 +100,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
       uri: options.url + '/v3/community/' + entity.value,
       headers: {
         key: options.apiKey,
-        'User-Agent': `greynoise-community-polarity-integration-v${packageVersion}`
+        'User-Agent': USER_AGENT
       },
       json: true
     };
@@ -214,21 +207,50 @@ function handleRestError(error, entity, res, body) {
   return result;
 }
 
-const useGreynoiseSubscriptionApi = (entities, options, cb) => {
+function errorToPojo(err) {
+  return err instanceof Error
+    ? {
+        ...err,
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+        detail: err.message ? err.message : err.detail ? err.detail : 'Unexpected error encountered'
+      }
+    : err;
+}
+
+const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
   let lookupResults = [];
   let tasks = [];
 
-  entities.forEach((entity) => {
-    Logger.trace({ uri: options }, 'Request URI');
+  if (ips.length > 0) {
+    // Returns an array of results for each IP that specifies whether or not
+    // the specific IP is in the riot or noise datasets.  If data exists for
+    // either dataset we then lookup the actual data.
+    const ipMultiResults = await getIpDataMulti(ips, options);
 
-    tasks.push(function (done) {
-      if (entity.isIP) {
-        getIpData(entity, options, done);
-      } else if (entity.type === 'cve') {
-        getCveData(entity, options, done);
-      } else {
-        done({ err: 'Unsupported entity type' });
-      }
+    ipMultiResults.forEach((ip) => {
+      tasks.push(async () => {
+        let results = {};
+
+        results.entity = ip.entity;
+
+        if (ip.data.noise) {
+          results.noiseData = await getIpNoiseData(ip.entity, options);
+        }
+
+        if (ip.data.riot) {
+          results.riotData = await getIpRiotData(ip.entity, options);
+        }
+
+        return results;
+      });
+    });
+  }
+
+  cves.forEach((cveEntity) => {
+    tasks.push((done) => {
+      getCveData(cveEntity, options, done);
     });
   });
 
@@ -256,189 +278,160 @@ const useGreynoiseSubscriptionApi = (entities, options, cb) => {
             data: null
           });
         }
+        return;
       }
 
-      if (result.entity.type === 'IPv4') {
-        if (result && result.rBody) {
-          lookupResults.push({
-            entity: result.entity,
-            data: {
-              summary: getSubscriptionSummaryTags(result),
-              details: {
-                ...result.body,
-                ...result.rBody,
-                ...result.statBody,
-                apiService: 'subscription',
-                hasResult: true
-              }
+      if (result.entity.type === 'IPv4' && (result.riotData || result.noiseData)) {
+        let details = {
+          ...result.riotData,
+          ...result.noiseData,
+          apiService: 'subscription',
+          hasResult: true
+        };
+
+        lookupResults.push({
+          entity: result.entity,
+          data: {
+            summary: getSubscriptionSummaryTags(details),
+            details
+          }
+        });
+      } else if (!options.ignoreNonSeen) {
+        lookupResults.push({
+          entity: result.entity,
+          data: {
+            summary: ['IP address has not been seen'],
+            details: {
+              hasResult: false
             }
-          });
-        } else if (result && result.body && result.body.seen) {
-          lookupResults.push({
-            entity: result.entity,
-            data: {
-              summary: getSubscriptionSummaryTags(result),
-              details: {
-                ...result.body,
-                ...result.rBody,
-                ...result.statBody,
-                apiService: 'subscription',
-                hasResult: true
-              }
-            }
-          });
-        } else if (!options.ignoreNonSeen) {
-          lookupResults.push({
-            entity: result.entity,
-            data: {
-              summary: ['IP address has not been seen'],
-              details: {
-                hasResult: false
-              }
-            }
-          });
-        } else {
-          lookupResults.push({
-            entity: result.entity,
-            data: null
-          });
-        }
+          }
+        });
+      } else {
+        lookupResults.push({
+          entity: result.entity,
+          data: null
+        });
       }
     });
+
     Logger.trace({ lookupResults }, 'response returned to client');
     cb(null, lookupResults);
   });
 };
 
-const runMultiQuickLookup = async (ipEntities, options) => {
+const getIpDataMulti = async (ipEntities, options) => {
+  const ipMap = new Map();
+  const ipStrings = [];
+
+  ipEntities.forEach((entity) => {
+    ipStrings.push(entity.value);
+    ipMap.set(entity.value, entity);
+  });
+
   const requestOptions = {
     method: 'post',
+    uri: 'https://api.greynoise.io/v2/noise/multi/quick',
     headers: {
       key: options.apiKey,
-      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+      'User-Agent': USER_AGENT
     },
-    data: {
+    body: {
       ips: ipEntities.map((entity) => entity.value)
     },
     json: true
   };
 
   const { statusCode, body } = await requestWithDefaultsAsync(requestOptions);
-};
+  const error = handleAsyncHttpResponse(statusCode, body);
 
-const getIpData = (entity, options, done) => {
-  let noiseContextRequestOptions = {
-    method: 'GET',
-    uri: options.url + '/v2/noise/context/' + entity.value,
-    headers: {
-      key: options.apiKey,
-      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-    },
-    json: true
-  };
-
-  requestWithDefaults(noiseContextRequestOptions, function (ncHttpError, ncRes, ncBody) {
-    if (ncHttpError) return done({ detail: 'Unexpected Noise Context HTTP request error', ncHttpError });
-
-    Logger.trace({ ncBody, ncStatusCode: ncRes ? ncRes.statusCode : 'N/A' }, 'Noise Context');
-    let riotIpRequestOptions = {
-      method: 'GET',
-      uri: `${options.url}/v2/riot/${entity.value}`,
-      headers: {
-        key: options.apiKey,
-        'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
-      },
-      json: true
-    };
-
-    requestWithDefaults(riotIpRequestOptions, function (rhttpError, rRes, rBody) {
-      if (rhttpError) return done({ detail: 'Unexpected Riot IP HTTP request error', rhttpError });
-      processNoiseContextRequestResult(entity, options, ncRes, ncBody, (ncError, ncResult) => {
-        if (ncError) return done(ncError);
-
-        let result, error;
-
-        if (rRes.statusCode === 200) {
-          if (!rBody.riot) {
-            // cache these as a miss
-            result = ncResult;
-          } else {
-            result = {
-              ...ncResult,
-              rBody: rBody
-            };
-          }
-        } else if ([400, 404].includes(rRes.statusCode)) {
-          result = ncResult;
-        } else if (rRes.statusCode === 429) {
-          error = {
-            ...ncResult,
-            rBody: rBody,
-            detail: "Too many requests.  You've hit the rate limit"
-          };
-        } else if (rRes.statusCode === 401) {
-          error = {
-            ...ncResult,
-            rBody: rBody,
-            detail: 'Unauthorized: Please check your API key'
-          };
-        } else {
-          // unexpected response received
-          error = {
-            ...ncResult,
-            rBody: rBody,
-            detail: `Unexpected HTTP status code on Riot IP search [${rRes.statusCode}] received`
-          };
-        }
-
-        done(error, result);
+  if (error) {
+    throw error;
+  } else {
+    const results = [];
+    body.forEach((ip) => {
+      results.push({
+        data: {
+          ...ip
+        },
+        entity: ipMap.get(ip.ip)
       });
     });
-  });
+    return results;
+  }
 };
 
-const processNoiseContextRequestResult = (entity, options, res, body, done) => {
-  let result = {};
-  let error = null;
-
-  if (res.statusCode === 200) {
-    if (options.ignoreNonSeen && body.seen === false) {
-      // cache these as a miss
-      result = {
-        entity: entity,
-        body: null
-      };
-    } else {
-      result = {
-        entity: entity,
-        body: body
-      };
-    }
-  } else if (res.statusCode === 400) {
-    result = {
-      entity: entity,
-      body: null
+function handleAsyncHttpResponse(statusCode, body) {
+  if (statusCode === 200) {
+    return;
+  } else if (statusCode === 400) {
+    return {
+      body,
+      detail: 'Bad Requests.'
     };
-  } else if (res.statusCode === 429) {
-    error = {
+  } else if (statusCode === 429) {
+    return {
       body,
       detail: "Too many requests.  You've hit the rate limit"
     };
-  } else if (res.statusCode === 401) {
-    error = {
+  } else if (statusCode === 401) {
+    return {
       body,
       detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
     };
   } else {
     // unexpected response received
-    error = {
+    return {
       body,
-      detail: `Unexpected HTTP status code [${res.statusCode}] received`
+      detail: `Unexpected HTTP status code [${statusCode}] received`
     };
   }
+}
 
-  done(error, result);
-};
+async function getIpNoiseData(entity, options) {
+  let noiseContextRequestOptions = {
+    method: 'GET',
+    uri: options.url + '/v2/noise/context/' + entity.value,
+    headers: {
+      key: options.apiKey,
+      'User-Agent': USER_AGENT
+    },
+    json: true
+  };
+
+  const { statusCode, body } = await requestWithDefaultsAsync(noiseContextRequestOptions);
+  const error = handleAsyncHttpResponse(statusCode, body);
+
+  Logger.trace({ noiseContextRequestOptions, statusCode, body }, 'Subscription Noise lookup results');
+
+  if (error) {
+    throw error;
+  } else {
+    return body;
+  }
+}
+
+async function getIpRiotData(entity, options) {
+  let riotIpRequestOptions = {
+    method: 'GET',
+    uri: `${options.url}/v2/riot/${entity.value}`,
+    headers: {
+      key: options.apiKey,
+      'User-Agent': USER_AGENT
+    },
+    json: true
+  };
+
+  const { statusCode, body } = await requestWithDefaultsAsync(riotIpRequestOptions);
+  const error = handleAsyncHttpResponse(statusCode, body);
+
+  Logger.trace({ riotIpRequestOptions, statusCode, body }, 'Subscription RIOT lookup results');
+
+  if (error) {
+    throw error;
+  } else {
+    return body;
+  }
+}
 
 const getCveData = (entity, options, done) => {
   const gnqlStatsRequestOptions = {
@@ -450,7 +443,7 @@ const getCveData = (entity, options, done) => {
     },
     headers: {
       key: options.apiKey,
-      'User-Agent': `greynoise-polarity-integration-v${packageVersion}`
+      'User-Agent': USER_AGENT
     },
     json: true
   };
@@ -513,7 +506,11 @@ const getCommunitySummaryTags = (data) => {
   let tags = [];
 
   if (!data) {
-    return ['Has not been seen'];
+    return ['IP address has not been seen'];
+  }
+
+  if (data.limitHit) {
+    return ['Lookup limit reached'];
   }
 
   if (data.noise) {
@@ -541,79 +538,77 @@ const getCommunitySummaryTags = (data) => {
 
 const getSubscriptionSummaryTags = (data) => {
   let tags = [];
-  // subscription non-riot
 
-  if (data.body) {
-    if (data.body.seen) {
-      tags.push(`Classification: ${data.body.classification}`);
+  if (data) {
+    if (data.seen) {
+      tags.push(`Classification: ${data.classification}`);
       tags.push('Internet scanner');
     }
-    if (data.body) {
-      if (data.body.bot)
-        tags.push({
-          icon: 'robot',
-          text: 'bot'
-        });
 
-      if (data.body.vpn) {
-        tags.push({
-          icon: 'shield-alt',
-          text: 'VPN'
-        });
-      }
+    if (data.bot)
+      tags.push({
+        icon: 'robot',
+        text: 'bot'
+      });
+
+    if (data.vpn) {
+      tags.push({
+        icon: 'shield-alt',
+        text: 'VPN'
+      });
     }
 
-    if (data.body && data.body.metadata) {
-      if (data.body.metadata.tor) {
+    if (data.metadata) {
+      if (data.metadata.tor) {
         tags.push({
           icon: 'user-secret',
           text: 'TOR'
         });
       }
-      if (data.body.metadata.organization) {
-        tags.push(`Org: ${data.body.metadata.organization}`);
+      if (data.metadata.organization) {
+        tags.push(`Org: ${data.metadata.organization}`);
       }
     }
 
-    if (data.body && Array.isArray(data.body.tags) && data.body.tags.length > 0) {
-      for (let i = 0; i < data.body.tags.length && i < MAX_GN_TAGS; i++) {
-        tags.push(`${data.body.tags[i]}`);
+    if (Array.isArray(data.tags) && data.tags.length > 0) {
+      for (let i = 0; i < data.tags.length && i < MAX_GN_TAGS; i++) {
+        tags.push(`${data.tags[i]}`);
       }
 
-      if (data.body.tags.length > MAX_GN_TAGS) {
-        tags.push(`+${data.body.tags.length - MAX_GN_TAGS} tags`);
+      if (data.tags.length > MAX_GN_TAGS) {
+        tags.push(`+${data.tags.length - MAX_GN_TAGS} tags`);
+      }
+    }
+
+    if (data.actor) {
+      if (data.actor !== 'unknown') {
+        tags.push(`Actor: ${data.actor}`);
       }
     }
 
-    if (data.body && data.body.actor) {
-      if (data.body.actor !== 'unknown') {
-        tags.push(`Actor: ${data.body.actor}`);
-      }
-    }
-  }
-
-  if (data.rBody && data.rBody.riot) {
-    if (data.rBody.trust_level) {
-      if (data.rBody.trust_level === '1') {
-        // Only RIOT IPs with a trust level of 1 are given the green threshold checkmark
-        tags.push({
-          type: 'RIOT',
-          text: `Classification: RIOT`
-        });
-        tags.push(`Trust Level: 1 - Reasonably Ignore`);
-      } else if (data.rBody.trust_level === '2') {
-        tags.push('Classification: RIOT');
-        tags.push(`Trust Level: 2 - Commonly Seen`);
+    if (data.riot) {
+      if (data.trust_level) {
+        if (data.trust_level === '1') {
+          // Only RIOT IPs with a trust level of 1 are given the green threshold checkmark
+          tags.push({
+            type: 'RIOT',
+            text: `Classification: RIOT`
+          });
+          tags.push(`Trust Level: 1 - Reasonably Ignore`);
+        } else if (data.trust_level === '2') {
+          tags.push('Classification: RIOT');
+          tags.push(`Trust Level: 2 - Commonly Seen`);
+        } else {
+          tags.push('Classification: RIOT');
+          tags.push(`Trust Level: ${data.trust_level}`);
+        }
       } else {
         tags.push('Classification: RIOT');
-        tags.push(`Trust Level: ${data.rBody.trust_level}`);
       }
-    } else {
-      tags.push('Classification: RIOT');
-    }
 
-    if (data.rBody.name) {
-      tags.push(data.rBody.name);
+      if (data.name) {
+        tags.push(data.name);
+      }
     }
   }
 

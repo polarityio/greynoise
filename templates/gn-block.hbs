@@ -71,10 +71,11 @@
           <div>
             This IP is associated with
             {{#if (not-eq details.vpn_service "N/A")}}
-              the VPN service {{details.vpn_service}}
+              the VPN service <strong>{{details.vpn_service}}</strong>.
             {{else}}
-              a VPN service
-            {{/if}}. Activity, malicious or otherwise, should not be attributed to the VPN service provider.
+              a VPN service.
+            {{/if}}
+            Activity, malicious or otherwise, should not be attributed to the VPN service provider.
           </div>
         {{/if}}
         {{#if details.seen}}
@@ -646,10 +647,17 @@
   {{#if (eq details.apiService 'community')}}
     {{#if details.limitHit}}
       <h1 class="p-title">{{fa-icon icon="info" fixedWidth=true}} Community API Limit Hit</h1>
-      <div style='margin-top: 3px;'>
-        <a href='https://www.greynoise.io/pricing/' class='p-link'>Get Started with GreyNoise Enterprise Here
-          {{fa-icon 'external-link-square' class='external-link-icon'}}</a>
-      </div>
+      {{#if details.usingApiKey}}
+        <div class="api-call-to-action alert alert-info">
+          <a href="https://www.greynoise.io/pricing/" class="p-link">Get Started with GreyNoise Enterprise Here
+            {{fa-icon icon="external-link-square" class="external-link-icon"}}</a>
+        </div>
+      {{else}}
+        <div class="api-call-to-action alert alert-info">
+          <a href="https://viz.greynoise.io/signup" class="p-link">Sign up for a free Community account to receive additional lookups and activate your GreyNoise Enterprise trial for full API and Visualizer access.
+            {{fa-icon icon="external-link-square" class="external-link-icon"}}</a>
+        </div>
+      {{/if}}
     {{else}}
       {{#if details.ip}}
         <div>
@@ -730,7 +738,8 @@
       {{/if}}
       {{#unless details.usingApiKey}}
         <div class="api-call-to-action alert alert-info">
-          {{fa-icon icon="gift" fixedWidth=true}} <a href="https://viz.greynoise.io/signup">Sign up for a free GreyNoise Community API key to unlock additional lookups. {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
+          {{fa-icon icon="gift" fixedWidth=true}} <a href="https://viz.greynoise.io/signup">
+          Activate your free 14-day trial of GreyNoise. You'll have full API access and Visualizer features during the trial. {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
         </div>
       {{/unless}}
     {{/if}}
