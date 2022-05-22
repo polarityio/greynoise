@@ -3,16 +3,9 @@ The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan
 
 Sign up for a free GreyNoise Community API key here https://viz.greynoise.io/signup
 
-## IP Address Resuts
-<div style="display: flex; justify-content: flex-start; align-items: flex-start;">
-  <img width="400" alt="Integration Example IP Address" src="./assets/ip.png">
-</div>
-
-## CVE Results
-<div style="display: flex; justify-content: flex-start; align-items: flex-start;">
-  <img width="400" alt="Integration Example IP Address" src="./assets/cve.png">
-  <img width="400" alt="Integration Example Indicators" src="./assets/cve-expanded-ip.png">
-</div>
+| ![](assets/riot.png) |![](/assets/tor.png)|![](assets/activity.png)
+|---|---|--|
+|*RIOT IP Address* |*Internet Scanner IP*| *Observed Activity*|
 
 To learn more about GreyNoise, please visit the [official website](https://greynoise.io).
 
