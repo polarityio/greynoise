@@ -51,25 +51,25 @@ module.exports = {
   },
   summary: {
     component: {
-      file: './components/gn-summary.js'
+      file: './components/summary.js'
     },
     template: {
-      file: './templates/gn-summary.hbs'
+      file: './templates/summary.hbs'
     }
   },
   defaultColor: 'light-pink',
   request: {
     // Provide the path to your certFile. Leave an empty string to ignore this option.
-    // Relative paths are relative to the Greynoise integration's root directory
+    // Relative paths are relative to the integration's root directory
     cert: '',
     // Provide the path to your private key. Leave an empty string to ignore this option.
-    // Relative paths are relative to the Greynoise integration's root directory
+    // Relative paths are relative to the integration's root directory
     key: '',
     // Provide the key passphrase if required.  Leave an empty string to ignore this option.
-    // Relative paths are relative to the Greynoise integration's root directory
+    // Relative paths are relative to the integration's root directory
     passphrase: '',
     // Provide the Certificate Authority. Leave an empty string to ignore this option.
-    // Relative paths are relative to the Greynoise integration's root directory
+    // Relative paths are relative to the integration's root directory
     ca: '',
     // An HTTP proxy to be used. Supports proxy Auth with Basic Auth, identical to support for
     // the url parameter (by embedding the auth info in the uri)
@@ -91,10 +91,10 @@ module.exports = {
    */
   options: [
     {
-      key: 'url',
-      name: 'GreyNoise Enterprise URL',
-      description: 'The URL path to the Enterprise GreyNoise API you wish to use.',
-      default: 'https://enterprise.api.greynoise.io/v2',
+      key: 'subscriptionUrl',
+      name: 'GreyNoise API URL',
+      description: 'The base URL to the GreyNoise API you wish to use. Defaults to "https://api.greynoise.io".',
+      default: 'https://api.greynoise.io',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
@@ -103,9 +103,19 @@ module.exports = {
       key: 'apiKey',
       name: 'API Key',
       description:
-        'Accounts api key used to access GreyNoise Api. If no API Key is entered, we will default to using the GreyNoise Community API to search.',
+        'Account API key used to access GreyNoise API.',
       default: '',
       type: 'password',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'subscriptionApi',
+      name: 'Search using the Subscription API',
+      description:
+          'If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)',
+      default: true,
+      type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
@@ -113,7 +123,7 @@ module.exports = {
       key: 'ignoreNonSeen',
       name: 'Ignore IPs that have not been seen',
       description:
-        'If set to true, IPs that have not been seen by Greynoise will not be displayed in the Polarity Overlay window.',
+        'If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.',
       default: false,
       type: 'boolean',
       userCanEdit: true,
