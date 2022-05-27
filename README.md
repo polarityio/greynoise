@@ -19,9 +19,9 @@ To learn more about GreyNoise, please visit the [official website](https://greyn
 ## GreyNoise Integration Options
 
 ### GreyNoise API Url
-The base URL to the GreyNoise API you wish to use. Defaults to "https://api.greynoise.io".
+The base URL to the GreyNoise API you wish to use. Defaults to `https://api.greynoise.io`.
 
-> Note that in versions prior to 3.3.1 of the integration, the default subscription API (enterprise) was "https://enterprise.api.greynoise.io/v2".  This has been changed to "https://api.greynoise.io" for cloud customers.
+> Note that in versions prior to 3.3.1 of the integration, the default subscription API (enterprise) was `https://enterprise.api.greynoise.io/v2`.  This has been changed to `https://api.greynoise.io` for cloud customers.
 
 ### API Key
 Account API key used to access GreyNoise API.
