@@ -91,7 +91,7 @@ module.exports = {
    */
   options: [
     {
-      key: 'url',
+      key: 'subscriptionUrl',
       name: 'GreyNoise API URL',
       description: 'The base URL to the GreyNoise API you wish to use. Defaults to "https://api.greynoise.io".',
       default: 'https://api.greynoise.io',

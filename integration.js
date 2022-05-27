@@ -97,7 +97,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   entities.forEach((entity) => {
     let requestOptions = {
       method: 'GET',
-      uri: options.url + '/v3/community/' + entity.value,
+      uri: options.subscriptionUrl + '/v3/community/' + entity.value,
       headers: {
         key: options.apiKey,
         'User-Agent': USER_AGENT
@@ -330,7 +330,7 @@ const getIpDataMulti = async (ipEntities, options) => {
 
   const requestOptions = {
     method: 'post',
-    uri: 'https://api.greynoise.io/v2/noise/multi/quick',
+    uri: options.subscriptionUrl + '/v2/noise/multi/quick',
     headers: {
       key: options.apiKey,
       'User-Agent': USER_AGENT
@@ -378,6 +378,12 @@ function handleAsyncHttpResponse(statusCode, body) {
       body,
       detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
     };
+  } else if (statusCode === 404) {
+    return {
+      body,
+      help: 'The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.',
+      detail: 'Provided URL or Endpoint could not be found'
+    };
   } else {
     // unexpected response received
     return {
@@ -390,7 +396,7 @@ function handleAsyncHttpResponse(statusCode, body) {
 async function getIpNoiseData(entity, options) {
   let noiseContextRequestOptions = {
     method: 'GET',
-    uri: options.url + '/v2/noise/context/' + entity.value,
+    uri: options.subscriptionUrl + '/v2/noise/context/' + entity.value,
     headers: {
       key: options.apiKey,
       'User-Agent': USER_AGENT
@@ -413,7 +419,7 @@ async function getIpNoiseData(entity, options) {
 async function getIpRiotData(entity, options) {
   let riotIpRequestOptions = {
     method: 'GET',
-    uri: `${options.url}/v2/riot/${entity.value}`,
+    uri: `${options.subscriptionUrl}/v2/riot/${entity.value}`,
     headers: {
       key: options.apiKey,
       'User-Agent': USER_AGENT
@@ -436,7 +442,7 @@ async function getIpRiotData(entity, options) {
 const getCveData = (entity, options, done) => {
   const gnqlStatsRequestOptions = {
     method: 'GET',
-    uri: `${options.url}/v2/experimental/gnql/stats`,
+    uri: `${options.subscriptionUrl}/v2/experimental/gnql/stats`,
     qs: {
       //count: 3,
       query: `cve:${entity.value}`
