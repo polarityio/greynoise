@@ -481,6 +481,12 @@ const processGnqlStatsRequestResults = (response, body, entity, options, done) =
       body,
       detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
     };
+  } else if (response.statusCode === 404) {
+    error = {
+      body,
+      help: 'The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.',
+      detail: 'Provided URL or Endpoint could not be found'
+    };
   } else {
     // unexpected response received
     error = {
