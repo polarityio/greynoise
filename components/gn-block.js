@@ -14,6 +14,7 @@ polarity.export = PolarityComponent.extend({
   }),
   showAllTags: false,
   maxInitialTagsToShow: 15,
+  maxInitialCountriesToShow: 10,
   expandableTitleStates: {},
   tagsToShow: Ember.computed('block._state.showAllTags', function () {
     let tags;
@@ -26,6 +27,15 @@ polarity.export = PolarityComponent.extend({
       return tags;
     }
     return tags.slice(0, this.maxInitialTagsToShow);
+  }),
+  countriesToShow: Ember.computed('block._state.showAllCountries', function () {
+    let countries;
+    countries = this.get('details.stats.countries');
+
+    if (this.get('block._state.showAllCountries')) {
+      return countries;
+    }
+    return countries.slice(0, this.maxInitialCountriesToShow);
   }),
   init() {
     const rawDataLength =
@@ -55,6 +65,9 @@ polarity.export = PolarityComponent.extend({
     },
     toggleShowTags: function () {
       this.toggleProperty('block._state.showAllTags');
+    },
+    toggleShowCountries: function () {
+      this.toggleProperty('block._state.showAllCountries');
     }
   }
 });
