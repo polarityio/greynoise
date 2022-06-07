@@ -114,7 +114,7 @@ module.exports = {
       name: 'Search using the Subscription API',
       description:
           'If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)',
-      default: true,
+      default: false,
       type: 'boolean',
       userCanEdit: true,
       adminOnly: false
