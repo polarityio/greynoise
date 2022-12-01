@@ -38,13 +38,6 @@ polarity.export = PolarityComponent.extend({
     return countries.slice(0, this.maxInitialCountriesToShow);
   }),
   init() {
-    const rawDataLength =
-      (this.get('details.raw_data.scan') || []).length +
-      (this.get('details.raw_data.web.paths') || []).length +
-      (this.get('details.raw_data.web.useragents') || []).length +
-      (this.get('details.raw_data.ja3') || []).length;
-
-    this.set('rawDataLength', rawDataLength);
     if (!this.get('block._state')) {
       this.set('block._state', {});
       this.set('block._state.activeTab', 'info');
