@@ -8,9 +8,9 @@
         <li class="nav-item">
           <a {{action "changeTab" "info"}} class="nav-link {{if (or (eq block._state.activeTab "info")(not block._state.activeTab)) "active"}}" href="#">Information</a>
         </li>
-        {{#if (gt rawDataLength 0)}}
+        {{#if (gt details.raw_data.totalRawData 0)}}
           <li class="nav-item">
-            <a {{action "changeTab" "activity"}} class="nav-link {{if (eq block._state.activeTab "activity") "active"}}" href="#">Observed Activity ({{rawDataLength}})</a>
+            <a {{action "changeTab" "activity"}} class="nav-link {{if (eq block._state.activeTab "activity") "active"}}" href="#">Observed Activity ({{details.raw_data.totalRawData}})</a>
           </li>
         {{/if}}
       </ul>
@@ -284,13 +284,21 @@
           {{#if details.raw_data.scan}}
             <h1 class="p-title">{{fa-icon icon="radar" fixedWidth=true}} Ports Scanned <span class="p-key">&nbsp;(Port / Protocol)</span></h1>
             <div class="activity-container">
-              {{#each details.raw_data.scan as |scan|}}
+              {{#each (take 250 details.raw_data.scan) as |scan|}}
                 {{#if (and scan.port scan.protocol)}}
                   <div>
                     <span class='p-value'>{{scan.port}} / {{scan.protocol}}</span>
                   </div>
                 {{/if}}
               {{/each}}
+              {{#if details.raw_data.truncatedScan}}
+                <div class="p-footnote">Showing first 250 results</div>
+                <div>
+                  <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
+                    View all results in GreyNoise Visualizer {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
+                  </a>
+                </div>
+              {{/if}}
             </div>
           {{/if}}
 
@@ -300,20 +308,36 @@
               <div class="mb-1">
                 <span class='p-key'>Path</span>
               </div>
-              {{#each details.raw_data.web.paths as |path|}}
+              {{#each (take 250 details.raw_data.web.paths) as |path|}}
                 <div>
                   <span class='p-value'>{{path}}</span>
                 </div>
               {{/each}}
+              {{#if details.raw_data.truncatedWebPaths}}
+                <div class="p-footnote">Showing first 250 results</div>
+                <div>
+                  <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
+                    View all results in GreyNoise Visualizer {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
+                  </a>
+                </div>
+              {{/if}}
               {{#if details.raw_data.web.useragents}}
                 <div class="mb-1 mt-2">
                   <span class='p-key'>User Agent</span>
                 </div>
-                {{#each details.raw_data.web.useragents as |ua|}}
+                {{#each (take 250 details.raw_data.web.useragents) as |ua|}}
                   <div>
                     <span class='p-value'>{{ua}}</span>
                   </div>
                 {{/each}}
+                {{#if details.raw_data.truncatedUserAgents}}
+                  <div class="p-footnote">Showing first 250 results</div>
+                  <div>
+                    <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
+                      View all results in GreyNoise Visualizer {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
+                    </a>
+                  </div>
+                {{/if}}
               {{/if}}
             </div>
           {{/if}}
@@ -321,13 +345,21 @@
           {{#if details.raw_data.ja3}}
             <h1 class="p-title">{{fa-icon icon="fingerprint" fixedWidth=true}} JA3 Fingerprints <span class="p-key">&nbsp;(fingerprint / port)</span></h1>
             <div class="activity-container">
-              {{#each details.raw_data.ja3 as |ja3|}}
+              {{#each (take 250 details.raw_data.ja3) as |ja3|}}
                 {{#if (and ja3.fingerprint ja3.port)}}
                   <div>
                     <span class='p-value'>{{ja3.fingerprint}} / {{ja3.port}}</span>
                   </div>
                 {{/if}}
               {{/each}}
+              {{#if details.raw_data.truncatedJa3}}
+                <div class="p-footnote">Showing first 250 results</div>
+                <div>
+                  <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
+                    View all results in GreyNoise Visualizer {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
+                  </a>
+                </div>
+              {{/if}}
             </div>
           {{/if}}
 
@@ -341,6 +373,14 @@
                   </div>
                 {{/if}}
               {{/each}}
+              {{#if details.raw_data.truncatedHassh}}
+                <div class="p-footnote">Showing first 250 results</div>
+                <div>
+                  <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
+                  View all results in GreyNoise Visualizer {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
+                  </a>
+                </div>
+              {{/if}}
             </div>
           {{/if}}
         {{/if}}

@@ -5,12 +5,13 @@ const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
 const fs = require('fs');
-const _ = require('lodash/fp');
+const _ = require('lodash');
 const util = require('util');
 
 const MAX_PARALLEL_LOOKUPS = 10;
 const MAX_GN_TAGS = 2;
 const USER_AGENT = `greynoise-polarity-integration-v${packageVersion}`;
+const RAW_DATA_LIMIT = 250;
 
 // noise and seen properties are used interchangeably
 // noise/seen means the IP is an Internet Scanner
@@ -288,6 +289,42 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
           apiService: 'subscription',
           hasResult: true
         };
+
+        // For raw data fields we display in the template we want to truncate them as they
+        // be very long and cause rendering issues.
+
+        let scanData = _.get(details, 'raw_data.scan', []);
+        if (scanData.length > RAW_DATA_LIMIT) {
+          details.raw_data.scan = scanData.slice(0, RAW_DATA_LIMIT);
+          details.raw_data.truncatedScan = true;
+        }
+
+        let ja3Data = _.get(details, 'raw_data.ja3', []);
+        if (ja3Data.length > RAW_DATA_LIMIT) {
+          details.raw_data.ja3 = ja3Data.slice(0, RAW_DATA_LIMIT);
+          details.raw_data.truncatedJa3 = true;
+        }
+
+        let webPaths = _.get(details, 'raw_data.web.paths', []);
+        if (webPaths.length > RAW_DATA_LIMIT) {
+          details.raw_data.web.paths = webPaths.slice(0, RAW_DATA_LIMIT);
+          details.raw_data.truncatedWebPaths = true;
+        }
+
+        let userAgents = _.get(details, 'raw_data.web.useragents', []);
+        if (webPaths.length > RAW_DATA_LIMIT) {
+          details.raw_data.web.useragents = userAgents.slice(0, RAW_DATA_LIMIT);
+          details.raw_data.truncatedUserAgents = true;
+        }
+
+        let hassh = _.get(details, 'raw_data.hassh', []);
+        if (webPaths.length > RAW_DATA_LIMIT) {
+          details.raw_data.hassh = hassh.slice(0, RAW_DATA_LIMIT);
+          details.raw_data.truncatedHassh = true;
+        }
+
+        let rawDataLength = scanData.length + ja3Data.length + webPaths.length + userAgents.length + hassh.length;
+        details.raw_data.totalRawData = rawDataLength;
 
         lookupResults.push({
           entity: result.entity,
