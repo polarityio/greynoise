@@ -1,7 +1,7 @@
 {
   "main": "./integration.js",
   "name": "GreyNoise",
-  "version": "3.3.3",
+  "version": "3.3.4",
   "private": true,
   "dependencies": {
     "async": "^3.2.3",
