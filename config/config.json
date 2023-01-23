@@ -1,0 +1,78 @@
+{
+  "name": "GreyNoise",
+  "acronym": "GN",
+  "description": "GreyNoise Intelligence is a cyber security company that collects, labels, and analyzes Internet-wide scan and attack data",
+  "entityTypes": [
+    "IPv4",
+    "cve"
+  ],
+  "styles": [
+    "./styles/gn.less"
+  ],
+  "block": {
+    "component": {
+      "file": "./components/gn-block.js"
+    },
+    "template": {
+      "file": "./templates/gn-block.hbs"
+    }
+  },
+  "summary": {
+    "component": {
+      "file": "./components/summary.js"
+    },
+    "template": {
+      "file": "./templates/summary.hbs"
+    }
+  },
+  "defaultColor": "light-pink",
+  "request": {
+    "cert": "",
+    "key": "",
+    "passphrase": "",
+    "ca": "",
+    "proxy": "",
+    "rejectUnauthorized": true
+  },
+  "logging": {
+    "level": "info"
+  },
+  "options": [
+    {
+      "key": "subscriptionUrl",
+      "name": "GreyNoise API URL",
+      "description": "The base URL to the GreyNoise API you wish to use. Defaults to \"https://api.greynoise.io\".",
+      "default": "https://api.greynoise.io",
+      "type": "text",
+      "userCanEdit": false,
+      "adminOnly": true
+    },
+    {
+      "key": "apiKey",
+      "name": "API Key",
+      "description": "Account API key used to access GreyNoise API.",
+      "default": "",
+      "type": "password",
+      "userCanEdit": true,
+      "adminOnly": false
+    },
+    {
+      "key": "subscriptionApi",
+      "name": "Search using the Subscription API",
+      "description": "If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)",
+      "default": false,
+      "type": "boolean",
+      "userCanEdit": true,
+      "adminOnly": false
+    },
+    {
+      "key": "ignoreNonSeen",
+      "name": "Ignore IPs that have not been seen",
+      "description": "If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.",
+      "default": false,
+      "type": "boolean",
+      "userCanEdit": true,
+      "adminOnly": false
+    }
+  ]
+}
