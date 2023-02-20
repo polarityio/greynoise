@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const request = require('postman-request');
-const config = require('./config/config');
-const { version: packageVersion } = require('./package.json');
-const async = require('async');
-const fs = require('fs');
-const _ = require('lodash');
-const util = require('util');
+const request = require("postman-request");
+const config = require("./config/config");
+const { version: packageVersion } = require("./package.json");
+const async = require("async");
+const fs = require("fs");
+const _ = require("lodash");
+const util = require("util");
 
 const MAX_PARALLEL_LOOKUPS = 10;
 const MAX_GN_TAGS = 2;
@@ -20,31 +20,31 @@ let Logger;
 let requestWithDefaults;
 let requestWithDefaultsAsync;
 
-function startup(logger) {
+function startup (logger) {
   Logger = logger;
   let defaults = {};
 
-  if (typeof config.request.cert === 'string' && config.request.cert.length > 0) {
+  if (typeof config.request.cert === "string" && config.request.cert.length > 0) {
     defaults.cert = fs.readFileSync(config.request.cert);
   }
 
-  if (typeof config.request.key === 'string' && config.request.key.length > 0) {
+  if (typeof config.request.key === "string" && config.request.key.length > 0) {
     defaults.key = fs.readFileSync(config.request.key);
   }
 
-  if (typeof config.request.passphrase === 'string' && config.request.passphrase.length > 0) {
+  if (typeof config.request.passphrase === "string" && config.request.passphrase.length > 0) {
     defaults.passphrase = config.request.passphrase;
   }
 
-  if (typeof config.request.ca === 'string' && config.request.ca.length > 0) {
+  if (typeof config.request.ca === "string" && config.request.ca.length > 0) {
     defaults.ca = fs.readFileSync(config.request.ca);
   }
 
-  if (typeof config.request.proxy === 'string' && config.request.proxy.length > 0) {
+  if (typeof config.request.proxy === "string" && config.request.proxy.length > 0) {
     defaults.proxy = config.request.proxy;
   }
 
-  if (typeof config.request.rejectUnauthorized === 'boolean') {
+  if (typeof config.request.rejectUnauthorized === "boolean") {
     defaults.rejectUnauthorized = config.request.rejectUnauthorized;
   }
 
@@ -52,8 +52,8 @@ function startup(logger) {
   requestWithDefaultsAsync = util.promisify(requestWithDefaults);
 }
 
-async function doLookup(entities, options, cb) {
-  Logger.trace({ entities }, 'doLookup');
+async function doLookup (entities, options, cb) {
+  Logger.trace({ entities }, "doLookup");
   const { validIps, validCves } = getValidIpsAndCves(entities);
 
   if (options.subscriptionApi) {
@@ -83,7 +83,7 @@ const getValidIpsAndCves = (entities) => {
   entities.forEach((entity) => {
     if (entity.isIP && isValidIp(entity)) {
       validIps.push(entity);
-    } else if (entity.type === 'cve') {
+    } else if (entity.type === "cve") {
       validCves.push(entity);
     }
   });
@@ -97,16 +97,16 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
 
   entities.forEach((entity) => {
     let requestOptions = {
-      method: 'GET',
-      uri: options.subscriptionUrl + '/v3/community/' + entity.value,
+      method: "GET",
+      uri: options.subscriptionUrl + "/v3/community/" + entity.value,
       headers: {
         key: options.apiKey,
-        'User-Agent': USER_AGENT
+        "User-Agent": USER_AGENT
       },
       json: true
     };
 
-    Logger.trace({ requestOptions }, 'request options');
+    Logger.trace({ requestOptions }, "request options");
 
     tasks.push(function (done) {
       requestWithDefaults(requestOptions, function (error, res, body) {
@@ -124,13 +124,13 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
 
   async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
     if (err) {
-      Logger.error({ err: err }, 'Error');
+      Logger.error({ err: err }, "Error");
       cb(err);
       return;
     }
 
     results.forEach((result) => {
-      Logger.trace({ result }, 'Community Result');
+      Logger.trace({ result }, "Community Result");
       if ((result.body === null || result.body.length === 0) && options.ignoreNonSeen) {
         lookupResults.push({
           entity: result.entity,
@@ -143,7 +143,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
             summary: getCommunitySummaryTags(result.body),
             details: {
               ...result.body,
-              apiService: 'community',
+              apiService: "community",
               usingApiKey: options.apiKey ? true : false,
               hasResult: result.body !== null
             }
@@ -152,18 +152,18 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
       }
     });
 
-    Logger.debug({ lookupResults }, 'Results');
+    Logger.debug({ lookupResults }, "Results");
     cb(null, lookupResults);
   });
 };
 
-function handleRestError(error, entity, res, body) {
+function handleRestError (error, entity, res, body) {
   let result;
 
   if (error) {
     return {
       error: error,
-      detail: 'HTTP Request Error'
+      detail: "HTTP Request Error"
     };
   }
 
@@ -174,14 +174,14 @@ function handleRestError(error, entity, res, body) {
       body: body
     };
   } else if (res.statusCode === 400) {
-    if (body.message.includes('Request is not a valid routable IPv4 address')) {
+    if (body.message.includes("Request is not a valid routable IPv4 address")) {
       result = {
         entity: entity,
         body: null
       };
     } else {
       result = {
-        error: 'Bad Request',
+        error: "Bad Request",
         detail: body.message
       };
     }
@@ -198,9 +198,9 @@ function handleRestError(error, entity, res, body) {
     };
   } else {
     result = {
-      error: 'Unexpected Error',
-      statusCode: res ? res.statusCode : 'Unknown',
-      detail: 'An unexpected error occurred',
+      error: "Unexpected Error",
+      statusCode: res ? res.statusCode : "Unknown",
+      detail: "An unexpected error occurred",
       body
     };
   }
@@ -208,14 +208,14 @@ function handleRestError(error, entity, res, body) {
   return result;
 }
 
-function errorToPojo(err) {
+function errorToPojo (err) {
   return err instanceof Error
     ? {
         ...err,
         name: err.name,
         message: err.message,
         stack: err.stack,
-        detail: err.message ? err.message : err.detail ? err.detail : 'Unexpected error encountered'
+        detail: err.message ? err.message : err.detail ? err.detail : "Unexpected error encountered"
       }
     : err;
 }
@@ -259,8 +259,8 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
     if (err) return cb(err);
 
     results.forEach((result) => {
-      if (result.entity.type === 'cve') {
-        Logger.trace({ result }, 'CVE Result');
+      if (result.entity.type === "cve") {
+        Logger.trace({ result }, "CVE Result");
         if (result && result.stats) {
           lookupResults.push({
             entity: result.entity,
@@ -269,7 +269,7 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
               details: {
                 stats: result.stats,
                 hasResult: true,
-                apiService: 'subscription'
+                apiService: "subscription"
               }
             }
           });
@@ -282,49 +282,55 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
         return;
       }
 
-      if (result.entity.type === 'IPv4' && (result.riotData || result.noiseData)) {
+      if (result.entity.type === "IPv4" && (result.riotData || result.noiseData)) {
         let details = {
           ...result.riotData,
           ...result.noiseData,
-          apiService: 'subscription',
+          apiService: "subscription",
           hasResult: true
         };
 
         // For raw data fields we display in the template we want to truncate them as they
         // be very long and cause rendering issues.
 
-        let scanData = _.get(details, 'raw_data.scan', []);
+        let scanData = _.get(details, "raw_data.scan", []);
         if (scanData.length > RAW_DATA_LIMIT) {
           details.raw_data.scan = scanData.slice(0, RAW_DATA_LIMIT);
           details.raw_data.truncatedScan = true;
         }
 
-        let ja3Data = _.get(details, 'raw_data.ja3', []);
+        let ja3Data = _.get(details, "raw_data.ja3", []);
         if (ja3Data.length > RAW_DATA_LIMIT) {
           details.raw_data.ja3 = ja3Data.slice(0, RAW_DATA_LIMIT);
           details.raw_data.truncatedJa3 = true;
         }
 
-        let webPaths = _.get(details, 'raw_data.web.paths', []);
+        let webPaths = _.get(details, "raw_data.web.paths", []);
         if (webPaths.length > RAW_DATA_LIMIT) {
           details.raw_data.web.paths = webPaths.slice(0, RAW_DATA_LIMIT);
           details.raw_data.truncatedWebPaths = true;
         }
 
-        let userAgents = _.get(details, 'raw_data.web.useragents', []);
+        let userAgents = _.get(details, "raw_data.web.useragents", []);
         if (webPaths.length > RAW_DATA_LIMIT) {
           details.raw_data.web.useragents = userAgents.slice(0, RAW_DATA_LIMIT);
           details.raw_data.truncatedUserAgents = true;
         }
 
-        let hassh = _.get(details, 'raw_data.hassh', []);
+        let hassh = _.get(details, "raw_data.hassh", []);
         if (webPaths.length > RAW_DATA_LIMIT) {
           details.raw_data.hassh = hassh.slice(0, RAW_DATA_LIMIT);
           details.raw_data.truncatedHassh = true;
         }
 
+        Logger.trace({ details }, "IPPPPPPPPP");
+
+        /// if community on this raw_data wont be there.
         let rawDataLength = scanData.length + ja3Data.length + webPaths.length + userAgents.length + hassh.length;
-        details.raw_data.totalRawData = rawDataLength;
+
+        if (_.get(details, ".raw_data")) {
+          details.raw_data.totalRawData = rawDataLength;
+        }
 
         lookupResults.push({
           entity: result.entity,
@@ -337,7 +343,7 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
         lookupResults.push({
           entity: result.entity,
           data: {
-            summary: ['IP address has not been seen'],
+            summary: ["IP address has not been seen"],
             details: {
               hasResult: false
             }
@@ -351,7 +357,7 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
       }
     });
 
-    Logger.trace({ lookupResults }, 'response returned to client');
+    Logger.trace({ lookupResults }, "response returned to client");
     cb(null, lookupResults);
   });
 };
@@ -366,11 +372,11 @@ const getIpDataMulti = async (ipEntities, options) => {
   });
 
   const requestOptions = {
-    method: 'post',
-    uri: options.subscriptionUrl + '/v2/noise/multi/quick',
+    method: "post",
+    uri: options.subscriptionUrl + "/v2/noise/multi/quick",
     headers: {
       key: options.apiKey,
-      'User-Agent': USER_AGENT
+      "User-Agent": USER_AGENT
     },
     body: {
       ips: ipEntities.map((entity) => entity.value)
@@ -397,13 +403,13 @@ const getIpDataMulti = async (ipEntities, options) => {
   }
 };
 
-function handleAsyncHttpResponse(statusCode, body) {
+function handleAsyncHttpResponse (statusCode, body) {
   if (statusCode === 200) {
     return;
   } else if (statusCode === 400) {
     return {
       body,
-      detail: 'Bad Requests.'
+      detail: "Bad Requests."
     };
   } else if (statusCode === 429) {
     return {
@@ -413,13 +419,13 @@ function handleAsyncHttpResponse(statusCode, body) {
   } else if (statusCode === 401) {
     return {
       body,
-      detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
+      detail: body && body.message ? body.message : "Unauthorized: Please check your API key"
     };
   } else if (statusCode === 404) {
     return {
       body,
-      help: 'The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.',
-      detail: 'Provided URL or Endpoint could not be found'
+      help: "The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.",
+      detail: "Provided URL or Endpoint could not be found"
     };
   } else {
     // unexpected response received
@@ -430,13 +436,13 @@ function handleAsyncHttpResponse(statusCode, body) {
   }
 }
 
-async function getIpNoiseData(entity, options) {
+async function getIpNoiseData (entity, options) {
   let noiseContextRequestOptions = {
-    method: 'GET',
-    uri: options.subscriptionUrl + '/v2/noise/context/' + entity.value,
+    method: "GET",
+    uri: options.subscriptionUrl + "/v2/noise/context/" + entity.value,
     headers: {
       key: options.apiKey,
-      'User-Agent': USER_AGENT
+      "User-Agent": USER_AGENT
     },
     json: true
   };
@@ -444,7 +450,7 @@ async function getIpNoiseData(entity, options) {
   const { statusCode, body } = await requestWithDefaultsAsync(noiseContextRequestOptions);
   const error = handleAsyncHttpResponse(statusCode, body);
 
-  Logger.trace({ noiseContextRequestOptions, statusCode, body }, 'Subscription Noise lookup results');
+  Logger.trace({ noiseContextRequestOptions, statusCode, body }, "Subscription Noise lookup results");
 
   if (error) {
     throw error;
@@ -453,13 +459,13 @@ async function getIpNoiseData(entity, options) {
   }
 }
 
-async function getIpRiotData(entity, options) {
+async function getIpRiotData (entity, options) {
   let riotIpRequestOptions = {
-    method: 'GET',
+    method: "GET",
     uri: `${options.subscriptionUrl}/v2/riot/${entity.value}`,
     headers: {
       key: options.apiKey,
-      'User-Agent': USER_AGENT
+      "User-Agent": USER_AGENT
     },
     json: true
   };
@@ -467,7 +473,7 @@ async function getIpRiotData(entity, options) {
   const { statusCode, body } = await requestWithDefaultsAsync(riotIpRequestOptions);
   const error = handleAsyncHttpResponse(statusCode, body);
 
-  Logger.trace({ riotIpRequestOptions, statusCode, body }, 'Subscription RIOT lookup results');
+  Logger.trace({ riotIpRequestOptions, statusCode, body }, "Subscription RIOT lookup results");
 
   if (error) {
     throw error;
@@ -478,7 +484,7 @@ async function getIpRiotData(entity, options) {
 
 const getCveData = (entity, options, done) => {
   const gnqlStatsRequestOptions = {
-    method: 'GET',
+    method: "GET",
     uri: `${options.subscriptionUrl}/v2/experimental/gnql/stats`,
     qs: {
       //count: 3,
@@ -486,12 +492,12 @@ const getCveData = (entity, options, done) => {
     },
     headers: {
       key: options.apiKey,
-      'User-Agent': USER_AGENT
+      "User-Agent": USER_AGENT
     },
     json: true
   };
   requestWithDefaults(gnqlStatsRequestOptions, function (err, response, body) {
-    if (err) return done({ detail: 'Unexpected GNQL Stats Query HTTP request error', err });
+    if (err) return done({ detail: "Unexpected GNQL Stats Query HTTP request error", err });
     processGnqlStatsRequestResults(response, body, entity, options, done);
   });
 };
@@ -516,13 +522,13 @@ const processGnqlStatsRequestResults = (response, body, entity, options, done) =
   } else if (response.statusCode === 401) {
     error = {
       body,
-      detail: body && body.message ? body.message : 'Unauthorized: Please check your API key'
+      detail: body && body.message ? body.message : "Unauthorized: Please check your API key"
     };
   } else if (response.statusCode === 404) {
     error = {
       body,
-      help: 'The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.',
-      detail: 'Provided URL or Endpoint could not be found'
+      help: "The default enterprise subscription url is `https://api.greynoise.io`.  Ensure you are using the correct URL.",
+      detail: "Provided URL or Endpoint could not be found"
     };
   } else {
     // unexpected response received
@@ -536,11 +542,11 @@ const processGnqlStatsRequestResults = (response, body, entity, options, done) =
 };
 
 const isLoopBackIp = (entity) => {
-  return entity.startsWith('127');
+  return entity.startsWith("127");
 };
 
 const isLinkLocalAddress = (entity) => {
-  return entity.startsWith('169');
+  return entity.startsWith("169");
 };
 
 const isPrivateIP = (entity) => {
@@ -555,16 +561,16 @@ const getCommunitySummaryTags = (data) => {
   let tags = [];
 
   if (!data) {
-    return ['IP address has not been seen'];
+    return ["IP address has not been seen"];
   }
 
   if (data.limitHit) {
-    return ['Lookup limit reached'];
+    return ["Lookup limit reached"];
   }
 
   if (data.noise) {
     tags.push(`Classification: ${data.classification}`);
-    tags.push('Internet scanner');
+    tags.push("Internet scanner");
   }
 
   if (data.riot) {
@@ -572,7 +578,7 @@ const getCommunitySummaryTags = (data) => {
     tags.push(`Classification: RIOT`);
   }
 
-  if (data.name && data.name !== 'unknown') {
+  if (data.name && data.name !== "unknown") {
     if (data.riot) {
       tags.push(`Provider: ${data.name}`);
     } else if (data.noise) {
@@ -591,27 +597,27 @@ const getSubscriptionSummaryTags = (data) => {
   if (data) {
     if (data.seen) {
       tags.push(`Classification: ${data.classification}`);
-      tags.push('Internet scanner');
+      tags.push("Internet scanner");
     }
 
     if (data.bot)
       tags.push({
-        icon: 'robot',
-        text: 'bot'
+        icon: "robot",
+        text: "bot"
       });
 
     if (data.vpn) {
       tags.push({
-        icon: 'shield-alt',
-        text: 'VPN'
+        icon: "shield-alt",
+        text: "VPN"
       });
     }
 
     if (data.metadata) {
       if (data.metadata.tor) {
         tags.push({
-          icon: 'user-secret',
-          text: 'TOR'
+          icon: "user-secret",
+          text: "TOR"
         });
       }
       if (data.metadata.organization) {
@@ -630,29 +636,29 @@ const getSubscriptionSummaryTags = (data) => {
     }
 
     if (data.actor) {
-      if (data.actor !== 'unknown') {
+      if (data.actor !== "unknown") {
         tags.push(`Actor: ${data.actor}`);
       }
     }
 
     if (data.riot) {
       if (data.trust_level) {
-        if (data.trust_level === '1') {
+        if (data.trust_level === "1") {
           // Only RIOT IPs with a trust level of 1 are given the green threshold checkmark
           tags.push({
-            type: 'RIOT',
+            type: "RIOT",
             text: `Classification: RIOT`
           });
           tags.push(`Trust Level: 1 - Reasonably Ignore`);
-        } else if (data.trust_level === '2') {
-          tags.push('Classification: RIOT');
+        } else if (data.trust_level === "2") {
+          tags.push("Classification: RIOT");
           tags.push(`Trust Level: 2 - Commonly Seen`);
         } else {
-          tags.push('Classification: RIOT');
+          tags.push("Classification: RIOT");
           tags.push(`Trust Level: ${data.trust_level}`);
         }
       } else {
-        tags.push('Classification: RIOT');
+        tags.push("Classification: RIOT");
       }
 
       if (data.name) {
@@ -664,7 +670,7 @@ const getSubscriptionSummaryTags = (data) => {
   return _.uniq(tags);
 };
 
-function getCveSummaryTags(data) {
+function getCveSummaryTags (data) {
   const tags = [];
   if (data.stats) {
     if (data.stats && data.stats.countries) {
@@ -677,7 +683,7 @@ function getCveSummaryTags(data) {
 
     if (data.stats.classifications) {
       data.stats.classifications.forEach((classification) => {
-        if (classification.classification === 'malicious') {
+        if (classification.classification === "malicious") {
           tags.push(`Malicious: ${classification.count}`);
         }
       });
@@ -686,13 +692,13 @@ function getCveSummaryTags(data) {
   return tags;
 }
 
-function validateOptions(userOptions, cb) {
+function validateOptions (userOptions, cb) {
   const errors = [];
 
   if (userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0) {
     errors.push({
-      key: 'apiKey',
-      message: 'You must provide a GreyNoise API key if using the subscription API'
+      key: "apiKey",
+      message: "You must provide a GreyNoise API key if using the subscription API"
     });
   }
 
