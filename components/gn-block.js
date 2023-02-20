@@ -56,22 +56,20 @@ polarity.export = PolarityComponent.extend({
   actions: {
     copyData: function () {
       let containerId = null;
-      const savedActiveTab = this.get("block._state.activeTab");
 
-      if (userOptions.subscriptionApi) {
-        if (savedActiveTab === "info") {
-          containerId = `information-container-${this.get("uniqueIdPrefix")}`;
-        }
+      if (this.get("block.userOptions.subscriptionApi")) {
+        const idTypes = {
+          info: `information-container-${this.get("uniqueIdPrefix")}`,
+          activity: `activity-container-${this.get("uniqueIdPrefix")}`
+        };
 
-        if (savedActiveTab === "activity") {
-          containerId = `activity-container-${this.get("uniqueIdPrefix")}`;
-        }
+        containerId = idTypes[this.get("block._state.activeTab")];
       } else {
         containerId = `community-container-${this.get("uniqueIdPrefix")}`;
       }
 
       Ember.run.scheduleOnce("afterRender", this, this.copyElementToClipboard, containerId);
-      Ember.run.scheduleOnce("destroy", this, this.restoreCopyState, savedActiveTab);
+      Ember.run.scheduleOnce("destroy", this, this.restoreCopyState);
     },
     changeTab: function (tabName) {
       this.set("block._state.activeTab", tabName);
