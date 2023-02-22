@@ -1,4 +1,5 @@
 "use strict";
+
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias("block.data.details"),
   tags: Ember.computed.alias("details.tags"),
@@ -55,6 +56,9 @@ polarity.export = PolarityComponent.extend({
   },
   actions: {
     copyData: function () {
+      const savedShowAllTags = this.get("block._state.showAllTags");
+      const savedActiveTab = this.get("block._state.activeTab");
+
       let containerId = null;
 
       if (this.get("block.userOptions.subscriptionApi")) {
@@ -68,8 +72,10 @@ polarity.export = PolarityComponent.extend({
         containerId = `community-container-${this.get("uniqueIdPrefix")}`;
       }
 
+      this.set("block._state.showAllTags", true);
+
       Ember.run.scheduleOnce("afterRender", this, this.copyElementToClipboard, containerId);
-      Ember.run.scheduleOnce("destroy", this, this.restoreCopyState);
+      Ember.run.scheduleOnce("destroy", this, this.restoreCopyState, savedActiveTab, savedShowAllTags);
     },
     changeTab: function (tabName) {
       this.set("block._state.activeTab", tabName);
@@ -101,9 +107,11 @@ polarity.export = PolarityComponent.extend({
     range.selectNode(typeof element === "string" ? document.getElementById(element) : element);
     return range;
   },
-  restoreCopyState (savedActiveTab) {
+  restoreCopyState (savedActiveTab, savedShowAllTags) {
     this.set("activeTab", savedActiveTab);
     this.set("showCopyMessage", true);
+    
+    this.set("block._state.showAllTags", savedShowAllTags);
 
     setTimeout(() => {
       if (!this.isDestroyed) {
