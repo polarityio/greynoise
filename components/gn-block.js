@@ -57,13 +57,17 @@ polarity.export = PolarityComponent.extend({
     copyData: function () {
       let containerId = null;
 
-      if (this.get("block.userOptions.subscriptionApi")) {
-        const idTypes = {
-          info: `information-container-${this.get("uniqueIdPrefix")}`,
-          activity: `activity-container-${this.get("uniqueIdPrefix")}`
-        };
+      const idTypes = {
+        info: `information-container-${this.get("uniqueIdPrefix")}`,
+        activity: `activity-container-${this.get("uniqueIdPrefix")}`
+      };
 
-        containerId = idTypes[this.get("block._state.activeTab")];
+      if (this.get("block.userOptions.subscriptionApi")) {
+        if (this.get("block.entity.type") === "cve") {
+          containerId = `cve-container-${this.get("uniqueIdPrefix")}`;
+        } else {
+          containerId = idTypes[this.get("block._state.activeTab")];
+        }
       } else {
         containerId = `community-container-${this.get("uniqueIdPrefix")}`;
       }

@@ -24,12 +24,12 @@
         {{/if}}
 
         <li class="d-flex align-items-center justify-content-end copy-btn-container">
-          <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
+          <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy information to Clipboard">
             {{fa-icon icon="clipboard" fixedWidth=true}}
           </button>
           <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
             {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-            Copied detection data.
+            Copied Information.
           </div>
         </li>
       </ul>
@@ -460,12 +460,12 @@
         </div>
       {{/if}}
       <div class="d-flex align-items-center justify-content-end copy-btn-container">
-        <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
+        <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy information to Clipboard">
           {{fa-icon icon="clipboard" fixedWidth=true}}
         </button>
         <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
           {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-          Copied detection data.
+          Copied Information.
         </div>
       </div>
       <div id={{concat "cve-container-" uniqueIdPrefix}}>
@@ -578,12 +578,12 @@
   {{! Start of Community IP Display }}
   {{#if (eq details.apiService "community")}}
     <div class="d-flex align-items-center justify-content-end copy-btn-container">
-      <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
+      <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy information to Clipboard">
         {{fa-icon icon="clipboard" fixedWidth=true}}
       </button>
       <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
         {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-        Copied detection data.
+        Copied Information.
       </div>
     </div>
 
