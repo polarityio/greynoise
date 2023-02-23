@@ -362,7 +362,7 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
   });
 };
 
-const getIpDataMulti = async (ipEntities, options) => {
+   const getIpDataMulti = async (ipEntities, options) => {
   const ipMap = new Map();
   const ipStrings = [];
 
@@ -414,7 +414,7 @@ function handleAsyncHttpResponse (statusCode, body) {
   } else if (statusCode === 429) {
     return {
       body,
-      detail: 'Too many requests.  You've hit the rate limit'
+    detail: "Too many requests.  You've hit the rate limit"
     };
   } else if (statusCode === 401) {
     return {
@@ -517,7 +517,7 @@ const processGnqlStatsRequestResults = (response, body, entity, options, done) =
   } else if (response.statusCode === 429) {
     error = {
       body,
-      detail: body && body.message ? body.message : 'Too many requests.  You've hit the rate limit'
+      detail: body && body.message ? body.message : "Too many requests.  You've hit the rate limit"
     };
   } else if (response.statusCode === 401) {
     error = {
