@@ -29,7 +29,11 @@
           </button>
           <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
             {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-            Copied Information.
+            {{#if (eq block._state.activeTab "activity")}}
+              Copied Observed Activity
+            {{else}}
+              Copied Information
+            {{/if}}
           </div>
         </li>
       </ul>
