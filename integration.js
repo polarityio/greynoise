@@ -323,12 +323,10 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
           details.raw_data.truncatedHassh = true;
         }
 
-        Logger.trace({ details }, 'IPPPPPPPPP');
-
-        /// if community on this raw_data wont be there.
+        // if community on this raw_data wont be there.
         let rawDataLength = scanData.length + ja3Data.length + webPaths.length + userAgents.length + hassh.length;
 
-        if (_.get(details, '.raw_data')) {
+        if (_.get(details, 'raw_data')) {
           details.raw_data.totalRawData = rawDataLength;
         }
 
