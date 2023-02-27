@@ -1,4 +1,19 @@
 {{#if details.hasResult}}
+  {{#unless block.isLoadingDetails}}
+    <div class="d-flex align-items-center justify-content-end copy-btn-container">
+      <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy information to Clipboard">
+        {{fa-icon icon="clipboard" fixedWidth=true}}
+      </button>
+      <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
+        {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
+        {{#if (eq block._state.activeTab "activity")}}
+          Copied Observed Activity
+        {{else}}
+          Copied Information
+        {{/if}}
+      </div>
+    </div>
+  {{/unless}}
   {{#if (eq details.apiService "subscription")}}
     {{#if details.ip}}
       <div>
@@ -22,16 +37,6 @@
             >Observed Activity ({{details.raw_data.totalRawData}})</a>
           </li>
         {{/if}}
-
-        <li class="d-flex align-items-center justify-content-end copy-btn-container">
-          <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
-            {{fa-icon icon="clipboard" fixedWidth=true}}
-          </button>
-          <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
-            {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-            Copied detection data.
-          </div>
-        </li>
       </ul>
       {{! information tab  }}
       {{#if (eq block._state.activeTab "info")}}
@@ -459,22 +464,13 @@
           </a>
         </div>
       {{/if}}
-      <div class="d-flex align-items-center justify-content-end copy-btn-container">
-        <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
-          {{fa-icon icon="clipboard" fixedWidth=true}}
-        </button>
-        <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
-          {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-          Copied detection data.
-        </div>
-      </div>
+
       <div id={{concat "cve-container-" uniqueIdPrefix}}>
         {{#if (and details.stats.countries details.stats.countries.length)}}
-          <h1 class="p-title">
+          <h1 class="p-title m-0">
             {{fa-icon "globe" fixedWidth=true}}
             Countries
           </h1>
-
           {{#each countriesToShow as |country|}}
             <div>
               <span class="p-key">{{country.country}}: </span>
@@ -577,16 +573,6 @@
 
   {{! Start of Community IP Display }}
   {{#if (eq details.apiService "community")}}
-    <div class="d-flex align-items-center justify-content-end copy-btn-container">
-      <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy Detection Data to Clipboard">
-        {{fa-icon icon="clipboard" fixedWidth=true}}
-      </button>
-      <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
-        {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-        Copied detection data.
-      </div>
-    </div>
-
     {{#if details.limitHit}}
       <h1 class="p-title">{{fa-icon icon="info" fixedWidth=true}} Community API Limit Hit</h1>
       {{#if details.usingApiKey}}
