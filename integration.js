@@ -20,7 +20,7 @@ let Logger;
 let requestWithDefaults;
 let requestWithDefaultsAsync;
 
-function startup(logger) {
+function startup (logger) {
   Logger = logger;
   let defaults = {};
 
@@ -52,7 +52,7 @@ function startup(logger) {
   requestWithDefaultsAsync = util.promisify(requestWithDefaults);
 }
 
-async function doLookup(entities, options, cb) {
+async function doLookup (entities, options, cb) {
   Logger.trace({ entities }, 'doLookup');
   const { validIps, validCves } = getValidIpsAndCves(entities);
 
@@ -157,7 +157,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   });
 };
 
-function handleRestError(error, entity, res, body) {
+function handleRestError (error, entity, res, body) {
   let result;
 
   if (error) {
@@ -186,7 +186,7 @@ function handleRestError(error, entity, res, body) {
       };
     }
   } else if (res.statusCode === 404) {
-    // "IP not observed scanning the internet or contained in RIOT data set."
+    // 'IP not observed scanning the internet or contained in RIOT data set.'
     result = {
       entity: entity,
       body: null
@@ -208,7 +208,7 @@ function handleRestError(error, entity, res, body) {
   return result;
 }
 
-function errorToPojo(err) {
+function errorToPojo (err) {
   return err instanceof Error
     ? {
         ...err,
@@ -323,8 +323,12 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
           details.raw_data.truncatedHassh = true;
         }
 
+        // if community on this raw_data wont be there.
         let rawDataLength = scanData.length + ja3Data.length + webPaths.length + userAgents.length + hassh.length;
-        details.raw_data.totalRawData = rawDataLength;
+
+        if (_.get(details, 'raw_data')) {
+          details.raw_data.totalRawData = rawDataLength;
+        }
 
         lookupResults.push({
           entity: result.entity,
@@ -356,7 +360,7 @@ const useGreynoiseSubscriptionApi = async (ips, cves, options, cb) => {
   });
 };
 
-const getIpDataMulti = async (ipEntities, options) => {
+   const getIpDataMulti = async (ipEntities, options) => {
   const ipMap = new Map();
   const ipStrings = [];
 
@@ -397,7 +401,7 @@ const getIpDataMulti = async (ipEntities, options) => {
   }
 };
 
-function handleAsyncHttpResponse(statusCode, body) {
+function handleAsyncHttpResponse (statusCode, body) {
   if (statusCode === 200) {
     return;
   } else if (statusCode === 400) {
@@ -408,7 +412,7 @@ function handleAsyncHttpResponse(statusCode, body) {
   } else if (statusCode === 429) {
     return {
       body,
-      detail: "Too many requests.  You've hit the rate limit"
+    detail: "Too many requests.  You've hit the rate limit"
     };
   } else if (statusCode === 401) {
     return {
@@ -430,7 +434,7 @@ function handleAsyncHttpResponse(statusCode, body) {
   }
 }
 
-async function getIpNoiseData(entity, options) {
+async function getIpNoiseData (entity, options) {
   let noiseContextRequestOptions = {
     method: 'GET',
     uri: options.subscriptionUrl + '/v2/noise/context/' + entity.value,
@@ -453,7 +457,7 @@ async function getIpNoiseData(entity, options) {
   }
 }
 
-async function getIpRiotData(entity, options) {
+async function getIpRiotData (entity, options) {
   let riotIpRequestOptions = {
     method: 'GET',
     uri: `${options.subscriptionUrl}/v2/riot/${entity.value}`,
@@ -664,7 +668,7 @@ const getSubscriptionSummaryTags = (data) => {
   return _.uniq(tags);
 };
 
-function getCveSummaryTags(data) {
+function getCveSummaryTags (data) {
   const tags = [];
   if (data.stats) {
     if (data.stats && data.stats.countries) {
@@ -686,7 +690,7 @@ function getCveSummaryTags(data) {
   return tags;
 }
 
-function validateOptions(userOptions, cb) {
+function validateOptions (userOptions, cb) {
   const errors = [];
 
   if (userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0) {
