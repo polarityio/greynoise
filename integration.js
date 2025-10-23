@@ -98,7 +98,7 @@ const useGreynoiseCommunityApi = (entities, options, cb) => {
   entities.forEach((entity) => {
     let requestOptions = {
       method: "GET",
-      uri: options.subscriptionUrl + "/v3/community/" + entity.value,
+      uri: options.subscriptionUrl + "/v3/ip/" + entity.value,
       headers: {
         key: options.apiKey,
         "User-Agent": USER_AGENT
