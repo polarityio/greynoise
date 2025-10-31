@@ -1,5 +1,6 @@
 @riot-color: #7bc942;
-@border-color: #dee2e6;
+@border-color: #eee;
+@p-blue-grey: #607d8b;
 
 pre {
   overflow-y: scroll;
@@ -139,8 +140,6 @@ pre {
   }
 }
 
-
-
 .copy-btn-container {
   flex: 1 1 auto;
   position: absolute;
@@ -181,5 +180,81 @@ pre {
       opacity: 0;
       transition: visibility 0s 0.25s, opacity 0.25s linear;
     }
+  }
+}
+
+.p-value {
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.p-scrollable-table {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.paging-bar {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  justify-content: flex-end;
+
+  .paging-info {
+    margin: 0px 5px;
+  }
+
+  .paging-btn {
+    border: 1px solid #e4e9f2;
+    height: 20px;
+    padding: 0px 8px 0px 8px;
+
+    &:hover:enabled {
+      background-color: darken(#e4e9f2, 5%);
+    }
+  }
+}
+
+h1 {
+  color: @p-blue-grey;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 5px 0 5px 0;
+}
+
+h2.p-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: @p-blue-grey;
+  margin: 5px 0 5px 0;
+}
+
+h3 {
+  font-size: 12px;
+  font-weight: 400;
+  color: @p-blue-grey;
+  margin: 0px 0px 5px 0;
+}
+
+.p-table {
+  tbody {
+    tr {
+      background-color: #f7f7f7;
+      border-bottom: 1px solid white;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.asset-container {
+  padding: 5px;
+  border: 1px solid @border-color;
+  border-radius: 4px;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0px;
   }
 }
