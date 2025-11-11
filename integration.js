@@ -81,8 +81,10 @@ const getValidIpsAndCves = (entities) => {
 };
 
 const useGreynoiseApi = async (ips, cves, options, cb) => {
-  try {
-    const ipPromises = ips.map((entity) => {
+  const tasks = [];
+
+  ips.forEach((entity) => {
+    tasks.push((done) => {
       const requestOptions = {
         method: 'GET',
         uri: `${options.subscriptionUrl}/v3/ip/${entity.value}`,
@@ -93,10 +95,15 @@ const useGreynoiseApi = async (ips, cves, options, cb) => {
         json: true
       };
       Logger.trace({ requestOptions }, 'IP request options');
-      return requestWithDefaultsAsync(requestOptions).then((response) => ({ response, entity, type: 'ip' }));
+      requestWithDefaults(requestOptions, (error, response, body) => {
+        if (error) return done(error);
+        done(null, { response, entity, type: 'ip' });
+      });
     });
+  });
 
-    const cvePromises = cves.map((entity) => {
+  cves.forEach((entity) => {
+    tasks.push((done) => {
       const requestOptions = {
         method: 'GET',
         uri: `${options.subscriptionUrl}/v1/cve/${entity.value}`,
@@ -107,21 +114,23 @@ const useGreynoiseApi = async (ips, cves, options, cb) => {
         json: true
       };
       Logger.trace({ requestOptions }, 'CVE request options');
-      return requestWithDefaultsAsync(requestOptions).then((response) => ({ response, entity, type: 'cve' }));
+      requestWithDefaults(requestOptions, (error, response, body) => {
+        if (error) return done(error);
+        done(null, { response, entity, type: 'cve' });
+      });
     });
+  });
 
-    const settledResults = await Promise.allSettled([...ipPromises, ...cvePromises]);
+  async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
+    if (err) {
+      Logger.error({ err }, 'Error in async.parallelLimit');
+      return cb(err);
+    }
+
     const lookupResults = [];
 
-    settledResults.forEach((result) => {
-      if (result.status === 'rejected') {
-        // This can happen for network errors, etc.
-        Logger.error({ error: result.reason }, 'Request failed');
-        // We could push an error result here if we wanted to show it in the UI
-        return;
-      }
-
-      const { response, entity, type } = result.value;
+    results.forEach((result) => {
+      const { response, entity, type } = result;
       const { statusCode, body } = response;
 
       Logger.trace({ response }, 'New Processing result');
@@ -140,7 +149,7 @@ const useGreynoiseApi = async (ips, cves, options, cb) => {
               }
             }
           });
-        } else if (statusCode === 404 && !options.ignoreNonSeen) {
+        } else if (statusCode === 404) {
           lookupResults.push({
             entity,
             data: {
@@ -207,62 +216,8 @@ const useGreynoiseApi = async (ips, cves, options, cb) => {
 
     Logger.debug({ lookupResults }, 'Results');
     cb(null, lookupResults);
-  } catch (error) {
-    Logger.error({ error }, 'Error in useGreynoiseApi');
-    cb(errorToPojo(error));
-  }
+  });
 };
-
-function handleRestError(error, entity, res, body) {
-  let result;
-
-  if (error) {
-    return {
-      error: error,
-      detail: 'HTTP Request Error'
-    };
-  }
-
-  if (res.statusCode === 200) {
-    // we got data!
-    result = {
-      entity: entity,
-      body: body
-    };
-  } else if (res.statusCode === 400) {
-    if (body.message.includes('Request is not a valid routable IPv4 address')) {
-      result = {
-        entity: entity,
-        body: null
-      };
-    } else {
-      result = {
-        error: 'Bad Request',
-        detail: body.message
-      };
-    }
-  } else if (res.statusCode === 404) {
-    // 'IP not observed scanning the internet or contained in RIOT data set.'
-    result = {
-      entity: entity,
-      body: null
-    };
-  } else if (res.statusCode === 429) {
-    result = {
-      entity: entity,
-      body: { limitHit: true }
-    };
-  } else {
-    result = {
-      error: 'Unexpected Error',
-      statusCode: res ? res.statusCode : 'Unknown',
-      detail: 'An unexpected error occurred',
-      body
-    };
-  }
-
-  return result;
-}
 
 function errorToPojo(err) {
   return err instanceof Error
@@ -360,21 +315,7 @@ function getCveSummaryTags(data) {
   return tags;
 }
 
-function validateOptions(userOptions, cb) {
-  const errors = [];
-
-  if (userOptions.subscriptionApi.value === true && userOptions.apiKey.value.length === 0) {
-    errors.push({
-      key: 'apiKey',
-      message: 'You must provide a GreyNoise API key if using the subscription API'
-    });
-  }
-
-  cb(null, errors);
-}
-
 module.exports = {
   doLookup,
-  startup,
-  validateOptions
+  startup
 };

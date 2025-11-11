@@ -53,15 +53,6 @@
       "adminOnly": false
     },
     {
-      "key": "subscriptionApi",
-      "name": "Search using the Subscription API",
-      "description": "If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)",
-      "default": false,
-      "type": "boolean",
-      "userCanEdit": true,
-      "adminOnly": false
-    },
-    {
       "key": "ignoreNonSeen",
       "name": "Ignore IPs that have not been seen",
       "description": "If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.",
