@@ -1,11 +1,8 @@
 'use strict';
 
 const request = require('postman-request');
-const config = require('./config/config');
 const { version: packageVersion } = require('./package.json');
 const async = require('async');
-const fs = require('fs');
-const _ = require('lodash');
 const util = require('util');
 
 const MAX_PARALLEL_LOOKUPS = 10;
@@ -23,30 +20,6 @@ let requestWithDefaultsAsync;
 function startup(logger) {
   Logger = logger;
   let defaults = {};
-
-  if (typeof config.request.cert === 'string' && config.request.cert.length > 0) {
-    defaults.cert = fs.readFileSync(config.request.cert);
-  }
-
-  if (typeof config.request.key === 'string' && config.request.key.length > 0) {
-    defaults.key = fs.readFileSync(config.request.key);
-  }
-
-  if (typeof config.request.passphrase === 'string' && config.request.passphrase.length > 0) {
-    defaults.passphrase = config.request.passphrase;
-  }
-
-  if (typeof config.request.ca === 'string' && config.request.ca.length > 0) {
-    defaults.ca = fs.readFileSync(config.request.ca);
-  }
-
-  if (typeof config.request.proxy === 'string' && config.request.proxy.length > 0) {
-    defaults.proxy = config.request.proxy;
-  }
-
-  if (typeof config.request.rejectUnauthorized === 'boolean') {
-    defaults.rejectUnauthorized = config.request.rejectUnauthorized;
-  }
 
   requestWithDefaults = request.defaults(defaults);
   requestWithDefaultsAsync = util.promisify(requestWithDefaults);
@@ -315,7 +288,34 @@ function getCveSummaryTags(data) {
   return tags;
 }
 
+function validateOptions(userOptions, cb) {
+  let errors = [];
+
+  if (
+    typeof userOptions.subscriptionUrl.value !== 'string' ||
+    (typeof userOptions.subscriptionUrl.value === 'string' && userOptions.subscriptionUrl.value.length === 0)
+  ) {
+    errors.push({
+      key: 'subscriptionUrl',
+      message: 'You must provide a Greynoise API URL.  The default value is "https://api.greynoise.io".'
+    });
+  }
+
+  if (
+    typeof userOptions.apiKey.value !== 'string' ||
+    (typeof userOptions.apiKey.value === 'string' && userOptions.apiKey.value.length === 0)
+  ) {
+    errors.push({
+      key: 'apiKey',
+      message: 'An API Key is required to use Greynoise.'
+    });
+  }
+
+  cb(null, errors);
+}
+
 module.exports = {
   doLookup,
-  startup
+  startup,
+  validateOptions
 };
