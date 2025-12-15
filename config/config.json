@@ -49,8 +49,8 @@
       "description": "Account API key used to access GreyNoise API.",
       "default": "",
       "type": "password",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "ignoreNonSeen",
@@ -58,8 +58,8 @@
       "description": "If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.",
       "default": false,
       "type": "boolean",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     }
   ]
 }
