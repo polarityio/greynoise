@@ -548,11 +548,10 @@
       {{! CVE Information }}
       {{#if (eq block.entity.type "cve")}}
         <div class="asset-container">
-          <h1>Common Vulnerabilities and Exposures</h1>
-          <h2 class="p-title">
-            {{fa-icon "eye" fixedWidth=true}}
+          <h1 class="p-title large">Common Vulnerabilities and Exposures</h1>
+          <h1 class="p-title">
             Context Information
-          </h2>
+          </h1>
           <div>
             <span class="p-key">Description:</span>
             <span class="p-value">{{details.details.vulnerability_description}}</span>
@@ -575,10 +574,9 @@
             <span class="p-key">Published to NVD:</span>
             <span class="p-value">{{details.details.published_to_nist_nvd}}</span>
           </div>
-          <h2 class="p-title">
-            {{fa-icon "clock" fixedWidth=true}}
+          <h1 class="p-title">
             Timeline
-          </h2>
+          </h1>
           <div>
             <span class="p-key">Published:</span>
             <span class="p-value">{{moment-format
