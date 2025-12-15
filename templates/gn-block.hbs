@@ -26,46 +26,46 @@
           {{/if}}
           {{! Ex RIOT part - Business Service Intelligence }}
           {{#if details.business_service_intelligence.found}}
-            <div>
-              <h1>Business Service Intelligence</h1>
-            </div>
-            <div>
-              <span class="p-key"> Trust Level: </span>
-              <span class="p-value">{{trustLevel}}</span>
-            </div>
-            <div>
-              <span class="p-key"> Category: </span>
-              <span class="p-value">{{details.business_service_intelligence.category}}</span>
-            </div>
-            <div>
-              <span class="p-key"> Name: </span>
-              <span class="p-value">{{details.business_service_intelligence.name}}</span>
-            </div>
-            <div>
-              <span class="p-key"> Description: </span>
-              <span class="p-value">{{details.business_service_intelligence.description}}</span>
-            </div>
-            <div>
-              <span class="p-key"> Explanation: </span>
-              <span class="p-value">{{details.business_service_intelligence.explanation}}</span>
-            </div>
-            <div>
-              <span class="p-key"> Updated Date: </span>
-              <span class="p-value">{{moment-format
-                  details.business_service_intelligence.last_updated
-                  "ddd, DD MMM YYYY HH:mm:ss [GMT]"
-                }}</span>
-            </div>
-            <div>
-              <span class="p-key"> Reference: </span>
-              <span class="p-value"><a
-                  href="{{details.business_service_intelligence.reference}}"
-                  class="p-link"
-                  target="_blank"
-                >{{details.business_service_intelligence.reference}}</a></span>
+            <h1 class="p-title large">Business Service Intelligence</h1>
+            <div class="paged-container">
+              <div>
+                <span class="p-key"> Trust Level: </span>
+                <span class="p-value">{{trustLevel}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Category: </span>
+                <span class="p-value">{{details.business_service_intelligence.category}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Name: </span>
+                <span class="p-value">{{details.business_service_intelligence.name}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Description: </span>
+                <span class="p-value">{{details.business_service_intelligence.description}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Explanation: </span>
+                <span class="p-value">{{details.business_service_intelligence.explanation}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Updated Date: </span>
+                <span class="p-value">{{moment-format
+                    details.business_service_intelligence.last_updated
+                    "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                  }}</span>
+              </div>
+              <div>
+                <span class="p-key"> Reference: </span>
+                <span class="p-value"><a
+                    href="{{details.business_service_intelligence.reference}}"
+                    class="p-link"
+                    target="_blank"
+                  >{{details.business_service_intelligence.reference}}</a></span>
+              </div>
             </div>
           {{/if}}
-
+          
           {{! Ex NOISE part - Internet Scanner Intelligence }}
           {{#if details.internet_scanner_intelligence.found}}
             <h1 class="p-title large">Internet Scanner Intelligence</h1>
