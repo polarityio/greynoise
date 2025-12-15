@@ -265,10 +265,23 @@ const getSummaryTags = (data) => {
 
   if (data.business_service_intelligence.found) {
     tags.push(`Category: ${data.business_service_intelligence.category}`);
-    tags.push(`Trust Level: ${data.business_service_intelligence.trust_level}`);
+    const trustLevel = data.business_service_intelligence.trust_level;
+    if (trustLevel) {
+      if (trustLevel === '1') {
+        // Only RIOT IPs with a trust level of 1 are given the green threshold checkmark
+        tags.push({
+          type: 'RIOT',
+          text: `Classification: RIOT`
+        });
+        tags.push(`Trust Level: 1 - Reasonably Ignore`);
+      } else if (trustLevel === '2') {
+        tags.push('Classification: RIOT');
+        tags.push(`Trust Level: 2 - Commonly Seen`);
+      }
+    }
     tags.push(`Name: ${data.business_service_intelligence.name}`);
   }
-
+  
   if (data.internet_scanner_intelligence.found) {
     tags.push(`Classification: ${data.internet_scanner_intelligence.classification}`);
     tags.push(`Organization: ${data.internet_scanner_intelligence.metadata.organization}`);
@@ -276,6 +289,10 @@ const getSummaryTags = (data) => {
 
   return tags;
 };
+
+function trustLevelNumericToHumanReadable(trustLevel){
+
+}
 
 function getCveSummaryTags(data) {
   const tags = [];

@@ -17,7 +17,7 @@
       {{/if}}
     {{else}}
       {{#if (eq block.entity.type "IPv4")}}
-        <div class="asset-container">
+        <div>
           {{#if details.ip}}
             <div>
               <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">Pivot To GreyNoise Visualizer
@@ -31,7 +31,7 @@
             </div>
             <div>
               <span class="p-key"> Trust Level: </span>
-              <span class="p-value">{{details.business_service_intelligence.trust_level}}</span>
+              <span class="p-value">{{trustLevel}}</span>
             </div>
             <div>
               <span class="p-key"> Category: </span>
@@ -68,171 +68,237 @@
 
           {{! Ex NOISE part - Internet Scanner Intelligence }}
           {{#if details.internet_scanner_intelligence.found}}
-            <h1>IP Scanner</h1>
+            <h1 class="p-title large">Internet Scanner Intelligence</h1>
+            
+            {{!-- Context --}}
+            <div class="paged-container">
+            <h1 class="p-title mt-0">
+              Context Information
+            </h1>
+            {{#if details.internet_scanner_intelligence.classification}}
+              <div>
+                <span class="p-key">Classification: </span>
+                <span class="p-value classification {{details.internet_scanner_intelligence.classification}}">{{details.internet_scanner_intelligence.classification}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.metadata.organization}}
+              <div>
+                <span class="p-key">Organization: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.metadata.organization}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.actor}}
+              <div>
+                <span class="p-key">Actor: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.actor}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.first_seen}}
+              <div>
+                <span class="p-key">First Seen: </span>
+                <span class="p-value">{{moment-format
+                        details.internet_scanner_intelligence.first_seen
+                        "YYYY-MM-DD"
+                }}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.last_seen}}
+              <div>
+                <span class="p-key">Last Seen: </span>
+                <span class="p-value">{{moment-format
+                        details.internet_scanner_intelligence.last_seen
+                        "YYYY-MM-DD"
+                }}</span>
+              </div>
+            {{/if}}
+            <div class="info-bar my-1">
+              <div class="info-bar-row two-wide">
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Spoofable</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.spoofable}}Yes{{else}}No{{/if}}
+                  </span>
+                </div>
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Bot</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.bot}}Yes{{else}}No{{/if}}
+                  </span>
+                </div>
+              </div>
+              <div class="info-bar-row two-wide">
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">VPN</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.vpn}}
+                      Yes {{#if details.internet_scanner_intelligence.vpn_service}}({{details.internet_scanner_intelligence.vpn_service}}){{/if}}
+                    {{else}}
+                      No
+                    {{/if}}
+                  </span>
+                </div>
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Tor</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.tor}}
+                      Yes
+                    {{else}}
+                      No
+                    {{/if}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {{#if details.internet_scanner_intelligence.cves}}
+              <h2 class="p-title">CVEs ({{details.internet_scanner_intelligence.cves.length}})</h2>
+              <div class="p-scrollable-table">
+                <table class="p-table">
+                  <tbody>
+                  {{#each details.internet_scanner_intelligence.cves as |cve|}}
+                    <tr>
+                      <td>{{cve}}</td>
+                    </tr>
+                  {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            {{/if}}
+          </div>
+          
+            {{!-- Tags --}}
             {{#if details.internet_scanner_intelligence.tags}}
-              <h2 class="p-title">
-                {{fa-icon "link" fixedWidth=true}}
-                Associations
-              </h2>
-              {{#each pagedAssociations as |tag|}}
-                <div class="mb-3">
-                  <div>
-                    <span class="p-key">Name: </span>
-                    <span class="p-value">{{tag.name}}</span>
-                  </div>
-                  <div>
-                    <span class="p-key">Description: </span>
-                    <span class="p-value">{{tag.description}}</span>
-                  </div>
-                  <div>
-                    <span class="p-key">Category: </span>
-                    <span class="p-value">{{tag.category}}</span>
-                  </div>
-                  <div>
-                    <span class="p-key">Intent: </span>
-                    <span class="p-value">{{tag.intention}}</span>
-                  </div>
-                  {{#if tag.cves}}
-                    <div>
-                      <span class="p-key">CVEs: </span>
-                      <span class="p-value">
-                        {{#each tag.cves as |cve index|}}
-                          {{cve}}{{#if (not (eq (sub tag.cves.length 1) index))}}, {{/if}}
-                        {{/each}}
-                      </span>
+              <div class="paged-container">
+                <h1 class="p-title">
+                  Tags ({{details.internet_scanner_intelligence.tags.length}})
+                </h1>
+                {{!-- Beginning of Port Paging Header --}}
+                {{#if (gt details.internet_scanner_intelligence.tags.length 0)}}
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="pl-0 page-info p-footnote">
+                      {{#if (gt details.internet_scanner_intelligence.tags.length associationsPageSize)}}
+                        Viewing tags {{associationsStartItem}} - {{associationsEndItem}} of {{details.internet_scanner_intelligence.tags.length}}
+                      {{else}}
+                        Viewing {{details.internet_scanner_intelligence.tags.length}} search results
+                      {{/if}}
                     </div>
-                  {{/if}}
-                  <div>
-                    <span class="p-key">Recommended Block: </span>
-                    <span class="p-value">{{tag.recommend_block}}</span>
                   </div>
-                </div>
-              {{/each}}
-              {{#if (gt details.internet_scanner_intelligence.tags.length associationsPageSize)}}
-                <div class="paging-bar">
-                  <button
-                    class="btn paging-btn"
-                    {{action "firstAssociationsPage"}}
-                    disabled={{isPrevAssociationsButtonsDisabled}}
-                  >
-                    {{fa-icon icon="angle-double-left" fixedWidth=false}}
-                  </button>
-                  <button
-                    class="btn paging-btn"
-                    {{action "prevAssociationsPage"}}
-                    disabled={{isPrevAssociationsButtonsDisabled}}
-                  >
-                    {{fa-icon icon="angle-left" fixedWidth=false}}
-                  </button>
-                  <div class="paging-info">
-                    {{associationsStartItem}}
-                    -
-                    {{associationsEndItem}}
-                    of
-                    {{details.internet_scanner_intelligence.tags.length}}
+                {{else}}
+                  <div class="p-footnote">
+                    No results found
                   </div>
-                  <button
-                    class="btn paging-btn"
-                    {{action "nextAssociationsPage"}}
-                    disabled={{isNextAssociationsButtonDisabled}}
-                  >
-                    {{fa-icon icon="angle-right" fixedWidth=false}}
-                  </button>
-                  <button
-                    class="btn paging-btn"
-                    {{action "lastAssociationsPage"}}
-                    disabled={{isNextAssociationsButtonDisabled}}
-                  >
-                    {{fa-icon icon="angle-double-right" fixedWidth=false}}
-                  </button>
-                </div>
-              {{/if}}
-              <h2 class="p-title">
-                {{fa-icon "eye" fixedWidth=true}}
-                Context Information
-              </h2>
-              {{#if details.internet_scanner_intelligence.first_seen}}
-                <div>
-                  <span class="p-key">First Seen: </span>
-                  <span class="p-value">{{moment-format
-                      details.internet_scanner_intelligence.first_seen
-                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
-                    }}</span>
-                </div>
-              {{/if}}
-              {{#if details.internet_scanner_intelligence.last_seen}}
-                <div>
-                  <span class="p-key">Last Seen: </span>
-                  <span class="p-value">{{moment-format
-                      details.internet_scanner_intelligence.last_seen
-                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
-                    }}</span>
-                </div>
-              {{/if}}
-              <div>
-                <span class="p-key">Found: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.found}}</span>
-              </div>
-              {{#if details.internet_scanner_intelligence.actor}}
-                <div>
-                  <span class="p-key">Actor: </span>
-                  <span class="p-value">{{details.internet_scanner_intelligence.actor}}</span>
-                </div>
-              {{/if}}
-              <div>
-                <span class="p-key">Spoofable: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.spoofable}}</span>
-              </div>
-              {{#if details.internet_scanner_intelligence.classification}}
-                <div>
-                  <span class="p-key">Classification: </span>
-                  <span class="p-value">{{details.internet_scanner_intelligence.classification}}</span>
-                </div>
-              {{/if}}
-              <div>
-                <span class="p-key">Bot: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.bot}}</span>
-              </div>
-              <div>
-                <span class="p-key">VPN: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.vpn}}</span>
-              </div>
-              {{#if details.internet_scanner_intelligence.vpn_service}}
-                <div>
-                  <span class="p-key">VPN Service: </span>
-                  <span class="p-value">{{details.internet_scanner_intelligence.vpn_service}}</span>
-                </div>
-              {{/if}}
-              <div>
-                <span class="p-key">Tor: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.tor}}</span>
-              </div>
-              {{#if details.internet_scanner_intelligence.cves}}
-                <div>
-                  <span class="p-key">CVEs ({{details.internet_scanner_intelligence.cves.length}})</span>
-                  <div class="p-scrollable-table">
-                    <table class="p-table">
-                      <tbody>
-                        {{#each details.internet_scanner_intelligence.cves as |cve|}}
-                          <tr>
-                            <td>{{cve}}</td>
-                          </tr>
-                        {{/each}}
-                      </tbody>
-                    </table>
+                {{/if}}
+                {{!-- End of Paging Header --}}
+                {{#each pagedAssociations as |tag|}}
+                  <div class="tag-container">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        {{#if (eq tag.category "tool")}}
+                          {{fa-icon icon="hammer" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{else if (eq tag.category "activity")}}
+                          {{fa-icon icon="wave-triangle" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{else}}
+                          {{fa-icon icon="circle" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{/if}}
+                        <span class="ml-1">{{tag.name}}</span>
+                        {{#if tag.cves}}
+                          <div>
+                            <span class="p-value">
+                              {{#each tag.cves as |cve index|}}
+                                {{cve}}{{#if (not (eq (sub tag.cves.length 1) index))}}, {{/if}}
+                              {{/each}}
+                            </span>
+                          </div>
+                        {{/if}}
+                      </div>
+                      <div>
+                        <button class="btn icon-btn" {{action (toggle "__viewDetails" tag)}}>
+                          {{#if tag.__viewDetails}}
+                            {{fa-icon icon="chevron-up" fixedWidth=true class="p-grey"}}
+                          {{else}}
+                            {{fa-icon icon="chevron-down" fixedWidth=true class="p-grey"}}
+                          {{/if}}
+                        </button>
+                      </div>
+                    </div>
+                    {{#if tag.__viewDetails}}
+                      <div class="mt-1">
+                        <div>
+                          <span class="p-key">Description: </span>
+                          <span class="p-value">{{tag.description}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Category: </span>
+                          <span class="p-value">{{tag.category}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Intent: </span>
+                          <span class="p-value classification {{tag.intention}}">{{tag.intention}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Recommended Block?: </span>
+                          <span class="p-value">{{#if tag.recommend_block}}Yes{{else}}No{{/if}}</span>
+                        </div>
+                      </div>
+                    {{/if}}
+                    
                   </div>
-                </div>
-              {{/if}}
-              <h2 class="p-title">
-                {{fa-icon "table" fixedWidth=true}}
+                {{/each}}
+                {{#if (gt details.internet_scanner_intelligence.tags.length associationsPageSize)}}
+                  <div class="paging-bar">
+                    <button
+                      class="btn paging-btn"
+                      {{action "firstAssociationsPage"}}
+                      disabled={{isPrevAssociationsButtonsDisabled}}
+                    >
+                      {{fa-icon icon="angle-double-left" fixedWidth=false}}
+                    </button>
+                    <button
+                      class="btn paging-btn"
+                      {{action "prevAssociationsPage"}}
+                      disabled={{isPrevAssociationsButtonsDisabled}}
+                    >
+                      {{fa-icon icon="angle-left" fixedWidth=false}}
+                    </button>
+                    <div class="paging-info">
+                      {{associationsStartItem}}
+                      -
+                      {{associationsEndItem}}
+                      of
+                      {{details.internet_scanner_intelligence.tags.length}}
+                    </div>
+                    <button
+                      class="btn paging-btn"
+                      {{action "nextAssociationsPage"}}
+                      disabled={{isNextAssociationsButtonDisabled}}
+                    >
+                      {{fa-icon icon="angle-right" fixedWidth=false}}
+                    </button>
+                    <button
+                      class="btn paging-btn"
+                      {{action "lastAssociationsPage"}}
+                      disabled={{isNextAssociationsButtonDisabled}}
+                    >
+                      {{fa-icon icon="angle-double-right" fixedWidth=false}}
+                    </button>
+                  </div>
+                {{/if}}
+              </div>
+            {{/if}}
+            {{!-- Metadata --}}
+            <div class="paged-container">
+              <h1 class="p-title">
                 Metadata
-              </h2>
+              </h1>
               {{#if details.internet_scanner_intelligence.metadata.asn}}
                 <div>
                   <span class="p-key">ASN: </span>
                   <span class="p-value">{{details.internet_scanner_intelligence.metadata.asn}}</span>
                 </div>
               {{/if}}
+              <div>
+                <span class="p-key">Mobile: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.metadata.mobile}}</span>
+              </div>
               {{#if details.internet_scanner_intelligence.metadata.source_country}}
                 <div>
                   <span class="p-key">Source Country: </span>
@@ -257,12 +323,7 @@
                   <span class="p-value">{{details.internet_scanner_intelligence.metadata.domain}}</span>
                 </div>
               {{/if}}
-              {{#if details.internet_scanner_intelligence.metadata.organization}}
-                <div>
-                  <span class="p-key">Organization: </span>
-                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.organization}}</span>
-                </div>
-              {{/if}}
+              
               {{#if details.internet_scanner_intelligence.metadata.category}}
                 <div>
                   <span class="p-key">Category: </span>
@@ -293,10 +354,6 @@
                   <span class="p-value">{{details.internet_scanner_intelligence.metadata.region}}</span>
                 </div>
               {{/if}}
-              <div>
-                <span class="p-key">Mobile: </span>
-                <span class="p-value">{{details.internet_scanner_intelligence.metadata.mobile}}</span>
-              </div>
               {{#if details.internet_scanner_intelligence.last_seen_timestamp}}
                 <div>
                   <span class="p-key">Last Seen Timestamp: </span>
@@ -336,7 +393,7 @@
                 </div>
               {{/if}}
               {{#if details.internet_scanner_intelligence.metadata.destination_countries}}
-                <span class="p-key">Destination Countries ({{details.internet_scanner_intelligence.metadata.destination_countries.length}})</span>
+                <h2 class="p-title">Destination Countries ({{details.internet_scanner_intelligence.metadata.destination_countries.length}})</h2>
                 <div class="p-scrollable-table">
                   <table class="p-table">
                     <tbody>
@@ -350,66 +407,140 @@
                 </div>
               {{/if}}
               {{#if details.internet_scanner_intelligence.raw_data.scan}}
-                <span class="p-key">Port & Protocol ({{details.internet_scanner_intelligence.raw_data.scan.length}})</span>
-                <div class="p-scrollable-table">
-                  <table class="p-table">
-                    <tbody>
-                      {{#each details.internet_scanner_intelligence.raw_data.scan as |scan|}}
-                        <tr>
-                          <td>{{scan.port}}</td>
-                          <td>{{scan.protocol}}</td>
-                        </tr>
-                      {{/each}}
-                    </tbody>
-                  </table>
+                <h2 class="p-title d-flex align-items-center justify-content-between">
+                  <div>
+                    Port & Protocol ({{details.internet_scanner_intelligence.raw_data.scan.length}})
+                  </div>
+                  <div {{action (toggle "__viewPortFilter" this)}} class="p-action">
+                    {{#if __viewPortFilter}}
+                      Hide port filter {{fa-icon icon="chevron-up" fixedWidth=true}}
+                    {{else}}
+                      View port filter {{fa-icon icon="chevron-down" fixedWidth=true}}
+                    {{/if}}
+                  </div>
+                </h2>
+                {{!-- Begining of Data Filter --}}
+                {{#if __viewPortFilter}}
+                  <div class="input-container">
+                  <label class="small ifta-label">
+                    Filter by Port or Protocol
+                  </label>
+                  {{input
+                    class=(concat "ifta-field mb-1" (if uiElement.error " error"))
+                    value=portFilterValue
+                    placeholder="Filter ports"
+                    disabled=false
+                    required=false
+                  }}
+                  {{#if (gt portFilterValue.length 0)}}
+                    <span {{action (mut portFilterValue "")}}>
+                      {{fa-icon icon="times-circle" fixedWidth=true class="clear-input-icon"}}
+                    </span>
+                  {{/if}}
+                </div>
+                {{/if}}
+                {{!-- End of Data Filter --}}
+                {{!-- Beginning of Port Paging Header --}}
+                {{#if (gt portFilteredData.length 0)}}
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="pl-0 page-info p-footnote">
+                      {{#if (gt portFilteredData.length portPageSize)}}
+                        Viewing ports {{portPagingStartItem}} - {{portPagingEndItem}} of {{portFilteredData.length}}
+                      {{else}}
+                        Viewing {{portFilteredData.length}} search results
+                      {{/if}}
+                    </div>
+                  </div>
+                {{else}}
+                  <div class="p-footnote">
+                    No results found
+                  </div>
+                {{/if}}
+                {{!-- End of Paging Header --}}               
+                <table class="p-table">
+                  <tbody>
+                    {{#each portFilteredPagingData as |scan|}}
+                      <tr>
+                        <td>{{scan.port}}</td>
+                        <td>{{scan.protocol}}</td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              {{/if}}
+              {{!-- Port Result Paging component --}}
+              {{#if (gt portFilteredData.length portPageSize)}}
+                <div class="paging-bar mt-1">
+                  <div class="d-flex align-items-center">
+                    <button class="btn paging-btn" {{action "portFirstPage"}} disabled={{portIsPrevButtonsDisabled}}>
+                      {{fa-icon icon="angle-double-left" fixedWidth=false}}
+                    </button>
+                    <button class="btn paging-btn" {{action "portPrevPage"}} disabled={{portIsPrevButtonsDisabled}}>
+                      {{fa-icon icon="angle-left" fixedWidth=false}}
+                    </button>
+                    <div class="paging-info">
+                      {{#if (eq portPageSize 1)}}
+                        {{portPagingStartItem}} of {{portFilteredData.length}}
+                      {{else}}
+                        {{portPagingStartItem}} - {{portPagingEndItem}} of {{portFilteredData.length}}
+                      {{/if}}
+                    </div>
+                    <button class="btn paging-btn" {{action "portNextPage"}} disabled={{portIsNextButtonDisabled}}>
+                      {{fa-icon icon="angle-right" fixedWidth=false}}
+                    </button>
+                    <button class="btn paging-btn" {{action "portLastPage"}} disabled={{portIsNextButtonDisabled}}>
+                      {{fa-icon icon="angle-double-right" fixedWidth=false}}
+                    </button>
+                  </div>
                 </div>
               {{/if}}
-            {{/if}}
+              {{!-- End of Port Paging Component --}}
+            </div>
+            {{!-- End of metadata --}}
+            
           {{/if}}
 
-          <div id={{concat "community-container-" uniqueIdPrefix}}>
-            <h2 class="p-title">{{fa-icon "clipboard" fixedWidth=true}} GreyNoise Community Summary</h2>
-            <div class="mb-2">
-              {{#if details.business_service_intelligence.found}}
-                <span>
-                  The IP
-                  <strong>{{block.entity.value}}</strong>
-                  has not been observed scanning the internet by GreyNoise. It is part of the
-                  <strong>RIOT</strong>
-                  project, which identifies IPs from known benign services and organizations that commonly cause false
-                  positives in network security and threat intelligence products. The collection of IPs in RIOT is
-                  continually curated and verified to provide accurate results.
-                </span>
-              {{/if}}
-              {{#if details.internet_scanner_intelligence.found}}
-                <div class="{{if details.business_service_intelligence.found 'mt-2'}}">
-
-                  {{#if (eq details.internet_scanner_intelligence.classification "benign")}}
-                    A benign classification from GreyNoise indicates this IP belongs to a legitimate service and is not
-                    considered malicious.
-                  {{/if}}
-                  {{#if (eq details.internet_scanner_intelligence.classification "malicious")}}
-                    GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
-                    malicious tags associated with it. It is still considered Internet background noise since it is
-                    scanning the entire Internet and NOT targeting you specifically.
-                  {{/if}}
-                  {{#if (eq details.internet_scanner_intelligence.classification "unknown")}}
-                    GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and
-                    has unknown intent. It is still considered Internet background noise since it is scanning the entire
-                    internet and NOT targeting you specifically.
-                  {{/if}}
-                </div>
-              {{/if}}
-            </div>
-            {{#unless details.usingApiKey}}
-              <div class="api-call-to-action alert alert-info">
-                {{fa-icon icon="gift" fixedWidth=true}}
-                <a href="https://viz.greynoise.io/signup">
-                  Activate your free 14-day trial of GreyNoise. You'll have full API access and Visualizer features
-                  during the trial.
-                  {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
+          <div class="paged-container">
+            <div id={{concat "community-container-" uniqueIdPrefix}}>
+              <h1 class="p-title">GreyNoise Summary</h1>
+              <div class="mb-2">
+                {{#if details.business_service_intelligence.found}}
+                  <span>
+                    The IP
+                    <strong>{{block.entity.value}}</strong>
+                    has not been observed scanning the internet by GreyNoise. It is part of the
+                    <strong>RIOT</strong>
+                    project, which identifies IPs from known benign services and organizations that commonly cause false
+                    positives in network security and threat intelligence products. The collection of IPs in RIOT is
+                    continually curated and verified to provide accurate results.
+                  </span>
+                {{/if}}
+                {{#if details.internet_scanner_intelligence.found}}
+                  <div class="{{if details.business_service_intelligence.found 'mt-2'}}">
+                    {{#if (eq details.internet_scanner_intelligence.classification "benign")}}
+                      A benign classification from GreyNoise indicates this IP belongs to a legitimate company, 
+                      search engine, security research organization, university, or individual and that the actor is trustworthy.
+                      Additionally, the actors' website includes some kind of opt-out functionality
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "malicious")}}
+                      GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
+                      malicious tags associated with it. It is still considered Internet background noise since it is
+                      scanning the entire Internet and not necessarily targeting you specifically.
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "suspicious")}}
+                      Greynoise classified the IP as suspicious indicating activity that lies between clearly malicious and benign behavior. 
+                      This activity involves systematic probing or enumeration, distinguishing it from random internet background noise. 
+                      This classification serves as contextual intelligence rather than an immediate call to action.
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "unknown")}}
+                      GreyNoise classified the IP as unknown because it could not be classified as malicious, suspicious, or benign and
+                      has unknown intent. It is still considered Internet background noise since it is scanning the entire
+                      internet and not necessarily targeting you specifically.
+                    {{/if}}
+                  </div>
+                {{/if}}
               </div>
-            {{/unless}}
+            </div>
           </div>
         </div>
       {{/if}}
