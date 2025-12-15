@@ -1,5 +1,9 @@
 @riot-color: #7bc942;
-@border-color: #dee2e6;
+@border-color: #eee;
+@p-blue-grey: #607d8b;
+@danger-color: #ff4559;
+@success-color: #5cb85c;
+@warning-color: #ff8f00;
 
 pre {
   overflow-y: scroll;
@@ -88,10 +92,6 @@ pre {
   }
 }
 
-.tag-icon {
-  color: #191314 !important;
-}
-
 .summary-icon {
   margin-bottom: 1px;
 }
@@ -129,17 +129,13 @@ pre {
 
   .stripe-bg {
     color: white;
-    background: repeating-linear-gradient(
-      45deg,
-      @riot-color,
-      @riot-color 5px,
-      lighten(@riot-color, 5%) 5px,
-      lighten(@riot-color, 5%) 10px
-    ) !important;
+    background: repeating-linear-gradient(45deg,
+    @riot-color,
+    @riot-color 5px,
+    lighten(@riot-color, 5%) 5px,
+    lighten(@riot-color, 5%) 10px) !important;
   }
 }
-
-
 
 .copy-btn-container {
   flex: 1 1 auto;
@@ -183,3 +179,265 @@ pre {
     }
   }
 }
+
+.p-value {
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.p-scrollable-table {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.paging-bar {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  justify-content: flex-end;
+
+  .paging-info {
+    margin: 0px 5px;
+  }
+
+  .paging-btn {
+    border: 1px solid #e4e9f2;
+    height: 20px;
+    padding: 0px 8px 0px 8px;
+
+    &:hover:enabled {
+      background-color: darken(#e4e9f2, 5%);
+    }
+  }
+}
+
+h1 {
+  color: @p-blue-grey;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 5px 0 5px 0;
+}
+
+h2.p-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: @p-blue-grey;
+  margin: 5px 0 5px 0;
+}
+
+h3 {
+  font-size: 12px;
+  font-weight: 400;
+  color: @p-blue-grey;
+  margin: 0px 0px 5px 0;
+}
+
+.p-table {
+  tbody {
+    tr {
+      background-color: #f7f7f7;
+      border-bottom: 1px solid white;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.p-title.large {
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+
+
+
+
+
+.paged-container {
+  border: 1px solid @border-color;
+  padding: 5px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  h1.p-title {
+    margin-top: 0px;
+  }
+
+  h2.p-title {
+    margin-top: 10px;
+  }
+}
+
+.tag-container {
+  border: 1px solid @border-color;
+  padding: 5px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .tag-icon {
+    color: #666;
+    
+    &.suspicious {
+      color: @warning-color;
+    }
+
+    &.malicious {
+      color: @danger-color;
+    }
+  }
+}
+
+.info-bar {
+  display: flex;
+  flex-direction: column;
+  border-radius: 3px;
+  border: 1px solid #eee;
+
+  .info-bar-row {
+    display: flex;
+    border-bottom: 1px dashed #eee;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &.two-wide {
+      .info-bar-pill {
+        width: 50%;
+      }
+    }
+
+    .info-bar-pill {
+      display: inline-block;
+      width: 33%;
+      padding: 3px 5px 3px 5px;
+
+      .info-bar-key {
+        width: 100%;
+        display: inline-block;
+        font-size: 10px;
+      }
+
+      .info-bar-value {
+        display: inline-block;
+        width: 100%;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.classification {
+  &.suspicious {
+    color: @warning-color;
+  }
+
+  &.malicious {
+    color: @danger-color;
+  }
+}
+
+.icon-btn {
+  font-size: 12px;
+  padding: 0px;
+  height: 20px;
+  
+  &:hover {
+    background-color: @border-color;
+  }
+
+  :active {
+    color: darken(@border-color, 10%);
+  }
+}
+
+/* Beginning Filter Sytles */
+@red: #FF4559;
+@green: #7bc942;
+@dark-green: #63a830;
+
+.input-container {
+  width: 100%;
+  position: relative;
+
+  label {
+    display: block;
+
+    .required {
+      color: @red;
+    }
+  }
+
+  input {
+    cursor: text;
+  }
+
+  .clear-input-icon {
+    position: absolute;
+    right: 10px;
+    top: 15px;
+    cursor: pointer;
+    color: #9a9a9a;
+
+    &:hover {
+      color: #484848;
+    }
+  }
+
+  .ifta-label {
+    margin-bottom: -15px;
+    z-index: 1;
+    position: relative;
+    padding: 0px 10px 0 10px;
+    pointer-events: none;
+  }
+
+  .ifta-field {
+    border: 0;
+    border-radius: 6px;
+    padding: 15px 30px 5px 10px;
+    margin: 0 0 15px;
+    width: 100%;
+    border: 1px solid #ccc;
+    line-height: 12px;
+    height: 38px;
+
+    &.error {
+      border-color: @red;
+    }
+  }
+
+  .ifta-field:focus {
+    -webkit-appearance: none;
+    outline: none;
+    color: #000000;
+    border-color: @green;
+    box-shadow: 0 0 0 0.2rem rgba(123, 201, 66, 0.25);
+  }
+
+  &:focus-within label {
+    color: @dark-green !important;
+  }
+
+  .select-arrow {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+  }
+
+  input:disabled, select:disabled, textarea:disabled, &.text-area-container.disabled {
+    background-color: #f6f6f3 !important;
+  }
+}
+
+/* End of Filter Styles */

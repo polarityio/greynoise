@@ -1,578 +1,6 @@
 {{#if details.hasResult}}
-  {{#unless block.isLoadingDetails}}
-    <div class="d-flex align-items-center justify-content-end copy-btn-container">
-      <button class="btn copy-btn p-action" {{action "copyData"}} title="Copy information to Clipboard">
-        {{fa-icon icon="clipboard" fixedWidth=true}}
-      </button>
-      <div class="copy-success-message {{if showCopyMessage 'visible' 'hidden'}}">
-        {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
-        {{#if (eq block._state.activeTab "activity")}}
-          Copied Observed Activity
-        {{else}}
-          Copied Information
-        {{/if}}
-      </div>
-    </div>
-  {{/unless}}
-  {{#if (eq details.apiService "subscription")}}
-    {{#if details.ip}}
-      <div>
-        <a href="https://www.greynoise.io/viz/ip/{{details.ip}}" class="p-link">Pivot To GreyNoise Visualizer
-          {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
-      </div>
-      <ul class="nav nav-tabs mt-2">
-        <li class="nav-item">
-          <a
-            {{action "changeTab" "info"}}
-            class="nav-link {{if (or (eq block._state.activeTab 'info') (not block._state.activeTab)) 'active'}}"
-            href="#"
-          >Information</a>
-        </li>
-        {{#if (gt details.raw_data.totalRawData 0)}}
-          <li class="nav-item">
-            <a
-              {{action "changeTab" "activity"}}
-              class="nav-link {{if (eq block._state.activeTab 'activity') 'active'}}"
-              href="#"
-            >Observed Activity ({{details.raw_data.totalRawData}})</a>
-          </li>
-        {{/if}}
-      </ul>
-      {{! information tab  }}
-      {{#if (eq block._state.activeTab "info")}}
-        <div id={{concat "information-container-" uniqueIdPrefix}}>
-          <h1 class="p-title">{{fa-icon "clipboard" fixedWidth=true}} Summary</h1>
-          {{#if (and details.riot (not details.seen))}}
-            <span>
-              The IP
-              <strong>{{block.entity.value}}</strong>
-              has not been observed scanning the internet by GreyNoise. It is part of the
-              <strong>RIOT</strong>
-              project, which identifies IPs from known benign services and organizations that commonly cause false
-              positives in network security and threat intelligence products.
-            </span>
-          {{else if details.riot}}
-            <span>
-              The IP
-              <strong>{{block.entity.value}}</strong>
-              is part of the
-              <strong>RIOT</strong>
-              project, which identifies IPs from known benign services and organizations that commonly cause false
-              positives in network security and threat intelligence products.
-            </span>
-          {{/if}}
-          {{#if details.seen}}
-            <div class="{{if details.riot 'mt-2'}}">
-              {{#if (eq details.classification "unknown")}}
-                The IP
-                {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}}
-                has an
-                <strong>unknown</strong>
-                classification
-              {{else}}
-                The IP
-                {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}}
-                is classified as
-                <strong>{{details.classification}}</strong>
-              {{/if}}
-              {{#if details.seen}}
-                and was last observed scanning the GreyNoise sensor network on
-                <strong>{{details.last_seen}}</strong>.
-              {{else}}
-                and has not been observed scanning the GreyNoise sensor network.
-              {{/if}}
-              {{#if (eq details.classification "benign")}}
-                A benign classification means GreyNoise has identified the actor (<strong>{{details.actor}}</strong>) to
-                be a legitimate company that is not malicious in nature.
-              {{/if}}
-              {{#if (eq details.classification "malicious")}}
-                GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
-                malicious tags associated with it. It is still considered Internet background noise since it is scanning
-                the entire Internet and NOT targeting you specifically.
-              {{/if}}
-              {{#if (eq details.classification "unknown")}}
-                GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has
-                unknown intent. It is still considered Internet background noise since it is scanning the entire
-                internet and NOT targeting you specifically.
-              {{/if}}
-            </div>
-          {{/if}}
-
-          {{#if details.metadata.tor}}
-            <h1 class="p-title">{{fa-icon icon="user-secret" fixedWidth=true}} Tor Exit Node</h1>
-            <div>
-              This IP is a Tor exit node. Activity, malicious or otherwise, should not be attributed to the organization
-              hosting the Tor exit node.
-            </div>
-          {{/if}}
-          {{#if details.bot}}
-            <h1 class="p-title">{{fa-icon icon="robot" fixedWidth=true}} Bot</h1>
-            <div>
-              This IP is associated with known bot activity. Common examples include credential stuffing, content
-              scraping, or brute force attacks.
-            </div>
-          {{/if}}
-          {{#if details.vpn}}
-            <h1 class="p-title">{{fa-icon icon="shield-alt" fixedWidth=true}} VPN</h1>
-            <div>
-              This IP is associated with
-              {{#if (not-eq details.vpn_service "N/A")}}
-                the VPN service
-                <strong>{{details.vpn_service}}</strong>.
-              {{else}}
-                a VPN service.
-              {{/if}}
-              Activity, malicious or otherwise, should not be attributed to the VPN service provider.
-            </div>
-          {{/if}}
-          {{#if details.seen}}
-            <h1 class="p-title">
-              {{fa-icon "eye" fixedWidth=true}}
-              Context Information
-            </h1>
-            <div>
-              <span class="p-key"> Internet Scanner: </span>
-              <span class="p-value">{{details.seen}}</span>
-            </div>
-          {{/if}}
-          {{#if details.bot}}
-            <div>
-              <span class="p-key"> BOT: </span>
-              <span class="p-value">{{details.bot}}</span>
-            </div>
-            {{#if details.bot}}
-              <span>IP is associated with known bot activity.</span>
-            {{/if}}
-          {{/if}}
-          {{#if details.vpn}}
-            <div>
-              <span class="p-key"> VPN: </span>
-              <span class="p-value">{{details.vpn}}</span>
-            </div>
-            {{#if details.bot}}
-              <span>IP is a known VPN service IP.</span>
-            {{/if}}
-            {{#if details.vpn_service}}
-              <div>
-                <span class="p-key"> VPN Service: </span>
-                <span class="p-value">{{details.vpn_service}}</span>
-              </div>
-            {{/if}}
-          {{/if}}
-          {{#if (and details.classification (not (eq details.classification "unknown")))}}
-            <div>
-              <span class="p-key"> Classification: </span>
-              <span class="p-value">{{details.classification}}</span>
-            </div>
-          {{/if}}
-          {{#if details.first_seen}}
-            <div>
-              <span class="p-key"> First Seen: </span>
-              <span class="p-value">{{details.first_seen}}</span>
-            </div>
-          {{/if}}
-          {{#if details.last_seen}}
-            <div>
-              <span class="p-key"> Last Seen: </span>
-              <span class="p-value">{{details.last_seen}}</span>
-            </div>
-          {{/if}}
-          {{#if (and details.actor (not (eq details.actor "unknown")))}}
-            <div>
-              <span class="p-key"> Actor: </span>
-              <span class="p-value">{{details.actor}}</span>
-            </div>
-          {{/if}}
-          {{#if (and details.cve details.cve.length)}}
-            <div>
-              <span class="p-key"> CVEs: </span>
-              <span class="p-value">
-                {{#each details.cve as |cve index|}}
-                  {{cve}}{{#if (not (eq (sub details.cve.length 1) index))}}, {{/if}}
-                {{/each}}
-              </span>
-            </div>
-          {{/if}}
-          {{! end of non-riot}}
-          {{#if details.riot}}
-            <h1 class="p-title">{{fa-icon icon="info" fixedWidth=true}} RIOT: {{details.name}}</h1>
-            {{#if details.description}}
-              <div>
-                <span class="p-key">Description</span>
-                <div class="p-block mt-1">{{details.description}}</div>
-              </div>
-            {{/if}}
-            {{#if details.trust_level}}
-              <div class="mt-2">
-                <span class="p-key"> Trust Level: </span>
-                <span class="p-value">{{trustLevel}}</span>
-              </div>
-              {{#if (eq details.trust_level "2")}}
-                <div class="mt-1">
-                  These IPs are commonly seen as they are necessary for regular and common business internet use.
-                  Companies that own these IPs typically do not claim responsibility or have accountability for the
-                  safety of these IPs. Malicious actions may be seen associated with these IPs.
-                </div>
-              {{/if}}
-              {{#if (eq details.trust_level "1")}}
-                <div class="mt-1">
-                  These IPs can be reasonably ignored because they are necessary for regular and common business
-                  internet use and the companies that own these IPs have some accountability for the safety of these
-                  IPs.
-                </div>
-              {{/if}}
-            {{/if}}
-            {{#if details.category}}
-              <div class="mt-2">
-                <span class="p-key"> Category: </span>
-                <span class="p-value">{{details.category}}</span>
-              </div>
-            {{/if}}
-            {{#if details.explanation}}
-              <div class="mt-1 mb-2">
-                <div class="p-block">{{details.explanation}}</div>
-              </div>
-            {{/if}}
-            {{#if details.last_updated}}
-              <div>
-                <span class="p-key"> Last Updated: </span>
-                <span class="p-value">{{details.last_updated}}</span>
-              </div>
-            {{/if}}
-            {{#if details.reference}}
-              <div>
-                <span class="p-key"> Reference: </span>
-                <span class="p-value">{{details.reference}}</span>
-              </div>
-            {{/if}}
-          {{/if}}
-          {{#if details.tags}}
-            <div class="p-title">
-              {{fa-icon "tag" fixedWidth=true}}
-              Tags
-            </div>
-            <div class="tags">
-              {{#each tagsToShow as |tag|}}
-                <span class="pulse-tag">{{tag}}</span>
-              {{/each}}
-              {{#if (gt tags.length maxInitialTagsToShow)}}
-                {{#if block._state.showAllTags}}
-                  <div class="p-action mt-1" {{action "toggleShowTags"}}>Show fewer tags
-                    {{fa-icon icon="caret-up" fixedWidth=true}}</div>
-                {{else}}
-                  <div class="p-action mt-1" {{action "toggleShowTags"}}>Show all tags
-                    {{fa-icon "caret-down" fixedWidth=true}}</div>
-                {{/if}}
-              {{/if}}
-            </div>
-          {{/if}}
-
-          {{#if details.metadata}}
-            <h1 class="p-title">
-              {{fa-icon "table" fixedWidth=true}}
-              Metadata
-            </h1>
-          {{/if}}
-
-          {{#if details.metadata.country}}
-            <div>
-              <span class="p-key"> Country: </span>
-              <span class="p-value">{{details.metadata.country}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.country_code}}
-            <div>
-              <span class="p-key"> Country Code: </span>
-              <span class="p-value">{{details.metadata.country_code}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.city}}
-            <div>
-              <span class="p-key"> City: </span>
-              <span class="p-value">{{details.metadata.city}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.organization}}
-            <div>
-              <span class="p-key"> Organization: </span>
-              <span class="p-value">{{details.metadata.organization}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.rdns}}
-            <div>
-              <span class="p-key"> RDNS: </span>
-              <span class="p-value">{{details.metadata.rdns}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.asn}}
-            <div>
-              <span class="p-key"> ASN: </span>
-              <span class="p-value">{{details.metadata.asn}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.tor}}
-            <div>
-              <span class="p-key"> TOR Node?: </span>
-              <span class="p-value">{{details.metadata.tor}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.os}}
-            <div>
-              <span class="p-key"> Operating System: </span>
-              <span class="p-value">{{details.metadata.os}}</span>
-            </div>
-          {{/if}}
-          {{#if details.metadata.category}}
-            <div>
-              <span class="p-key"> Category: </span>
-              <span class="p-value">{{details.metadata.category}}</span>
-            </div>
-          {{/if}}
-        </div>
-      {{/if}}
-      {{! end of information tab  }}
-
-      {{! Activity Tab }}
-      {{#if (eq block._state.activeTab "activity")}}
-        <div id={{concat "activity-container-" uniqueIdPrefix}}>
-          {{#if details.raw_data}}
-            {{#if details.raw_data.scan}}
-              <h1 class="p-title">{{fa-icon icon="radar" fixedWidth=true}}
-                Ports Scanned
-                <span class="p-key">&nbsp;(Port / Protocol)</span></h1>
-              <div class="activity-container">
-                {{#each details.raw_data.scan as |scan|}}
-                  {{#if (and scan.port scan.protocol)}}
-                    <div>
-                      <span class="p-value">{{scan.port}} / {{scan.protocol}}</span>
-                    </div>
-                  {{/if}}
-                {{/each}}
-                {{#if details.raw_data.truncatedScan}}
-                  <div class="p-footnote">Showing first 250 results</div>
-                  <div>
-                    <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
-                      View all results in GreyNoise Visualizer
-                      {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-                    </a>
-                  </div>
-                {{/if}}
-              </div>
-            {{/if}}
-
-            {{#if (or details.raw_data.web.paths details.raw_data.web.useragents)}}
-              <h1 class="p-title">{{fa-icon icon="globe" fixedWidth=true}} Web Requests</h1>
-              <div class="activity-container">
-                <div class="mb-1">
-                  <span class="p-key">Path</span>
-                </div>
-                {{#each (take 250 details.raw_data.web.paths) as |path|}}
-                  <div>
-                    <span class="p-value">{{path}}</span>
-                  </div>
-                {{/each}}
-                {{#if details.raw_data.truncatedWebPaths}}
-                  <div class="p-footnote">Showing first 250 results</div>
-                  <div>
-                    <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
-                      View all results in GreyNoise Visualizer
-                      {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-                    </a>
-                  </div>
-                {{/if}}
-                {{#if details.raw_data.web.useragents}}
-                  <div class="mb-1 mt-2">
-                    <span class="p-key">User Agent</span>
-                  </div>
-                  {{#each (take 250 details.raw_data.web.useragents) as |ua|}}
-                    <div>
-                      <span class="p-value">{{ua}}</span>
-                    </div>
-                  {{/each}}
-                  {{#if details.raw_data.truncatedUserAgents}}
-                    <div class="p-footnote">Showing first 250 results</div>
-                    <div>
-                      <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
-                        View all results in GreyNoise Visualizer
-                        {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-                      </a>
-                    </div>
-                  {{/if}}
-                {{/if}}
-              </div>
-            {{/if}}
-
-            {{#if details.raw_data.ja3}}
-              <h1 class="p-title">{{fa-icon icon="fingerprint" fixedWidth=true}}
-                JA3 Fingerprints
-                <span class="p-key">&nbsp;(fingerprint / port)</span></h1>
-              <div class="activity-container">
-                {{#each (take 250 details.raw_data.ja3) as |ja3|}}
-                  {{#if (and ja3.fingerprint ja3.port)}}
-                    <div>
-                      <span class="p-value">{{ja3.fingerprint}} / {{ja3.port}}</span>
-                    </div>
-                  {{/if}}
-                {{/each}}
-                {{#if details.raw_data.truncatedJa3}}
-                  <div class="p-footnote">Showing first 250 results</div>
-                  <div>
-                    <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
-                      View all results in GreyNoise Visualizer
-                      {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-                    </a>
-                  </div>
-                {{/if}}
-              </div>
-            {{/if}}
-
-            {{#if details.raw_data.hassh}}
-              <h1 class="p-title">{{fa-icon icon="fingerprint" fixedWidth=true}}
-                HASSH Fingerprint
-                <span class="p-key">&nbsp;(fingerprint / port)</span></h1>
-              <div class="activity-container">
-                {{#each details.raw_data.hassh as |hassh|}}
-                  {{#if (and hassh.fingerprint hassh.port)}}
-                    <div>
-                      <span class="p-value">{{hassh.fingerprint}} / {{hassh.port}}</span>
-                    </div>
-                  {{/if}}
-                {{/each}}
-                {{#if details.raw_data.truncatedHassh}}
-                  <div class="p-footnote">Showing first 250 results</div>
-                  <div>
-                    <a href="https://viz.greynoise.io/ip/{{block.entity.value}}" class="p-link">
-                      View all results in GreyNoise Visualizer
-                      {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-                    </a>
-                  </div>
-                {{/if}}
-              </div>
-            {{/if}}
-          {{/if}}
-        </div>
-      {{/if}}
-    {{/if}}
-
-    {{! CVE (Subscription Only) }}
-    {{#if details.stats}}
-      {{#if (and details.data.length (eq block.entity.type "cve"))}}
-        <div>
-          <a href="https://www.greynoise.io/viz/query/?gnql=cve%3A{{block.entity.value}}" class="p-link">
-            Pivot To GreyNoise Visualizer
-            {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}
-          </a>
-        </div>
-      {{/if}}
-
-      <div id={{concat "cve-container-" uniqueIdPrefix}}>
-        {{#if (and details.stats.countries details.stats.countries.length)}}
-          <h1 class="p-title m-0">
-            {{fa-icon "globe" fixedWidth=true}}
-            Countries
-          </h1>
-          {{#each countriesToShow as |country|}}
-            <div>
-              <span class="p-key">{{country.country}}: </span>
-              <span class="p-value">{{country.count}}</span>
-            </div>
-          {{/each}}
-          {{#if (gt details.stats.countries.length maxInitialCountriesToShow)}}
-            {{#if block._state.showAllCountries}}
-              <div class="p-action mt-1" {{action "toggleShowCountries"}}>Show fewer countries
-                {{fa-icon icon="caret-up" fixedWidth=true}}</div>
-            {{else}}
-              <div class="p-action mt-1" {{action "toggleShowCountries"}}>Show all countries
-                {{fa-icon "caret-down" fixedWidth=true}}</div>
-            {{/if}}
-          {{/if}}
-        {{/if}}
-
-        {{#if (and details.stats.classifications details.stats.classifications.length)}}
-          <h1 class="p-title">
-            {{fa-icon "puzzle-piece" fixedWidth=true}}
-            Classifications
-          </h1>
-          {{#each details.stats.classifications as |classification|}}
-            <div>
-              <span class="p-key">{{capitalize classification.classification}}: </span>
-              <span class="p-value">{{classification.count}}</span>
-            </div>
-          {{/each}}
-        {{/if}}
-
-        {{#if (and details.stats.actors details.stats.actors.length)}}
-          <h1 class="p-title">
-            {{fa-icon "user-secret" fixedWidth=true}}
-            Actors
-          </h1>
-          {{#each details.stats.actors as |actor|}}
-            <div>
-              <span class="p-key">{{actor.actor}}: </span>
-              <span class="p-value">{{actor.count}}</span>
-            </div>
-          {{/each}}
-        {{/if}}
-
-        {{#if (and details.stats.tags details.stats.tags.length)}}
-          <h1 class="p-title">
-            {{fa-icon "tag" fixedWidth=true}}
-            Tags
-          </h1>
-          <div class="tags">
-            {{#each tagsToShow as |tag|}}
-              <span class="category-pill">
-                <span class="category">
-                  {{tag.tag}}
-                </span>
-                <span class="category-count">
-                  {{tag.count}}
-                </span>
-              </span>
-            {{/each}}
-            {{#if (gt details.stats.tags.length maxInitialTagsToShow)}}
-              {{#if block._state.showAllTags}}
-                <div class="p-action mt-1" {{action "toggleShowTags"}}>Show fewer tags
-                  {{fa-icon icon="caret-up" fixedWidth=true}}</div>
-              {{else}}
-                <div class="p-action mt-1" {{action "toggleShowTags"}}>Show all tags
-                  {{fa-icon "caret-down" fixedWidth=true}}</div>
-              {{/if}}
-            {{/if}}
-          </div>
-        {{/if}}
-
-        {{#if (and details.stats.operating_systems details.stats.operating_systems.length)}}
-          <h1 class="p-title">
-            {{fa-icon "cog" fixedWidth=true}}
-            Operating Systems
-          </h1>
-          {{#each details.stats.operating_systems as |operating_system|}}
-            <div>
-              <span class="p-key">{{operating_system.operating_system}}: </span>
-              <span class="p-value">{{operating_system.count}}</span>
-            </div>
-          {{/each}}
-        {{/if}}
-
-        {{#if (and details.stats.spoofable details.stats.spoofable.length)}}
-          <h1 class="p-title">
-            {{fa-icon "user-secret" fixedWidth=true}}
-            Spoofable
-          </h1>
-          {{#each details.stats.spoofable as |spoofable|}}
-            <div>
-              <span class="p-key">{{if spoofable.spoofable "True" "False"}}: </span>
-              <span class="p-value">{{spoofable.count}}</span>
-            </div>
-          {{/each}}
-        {{/if}}
-      </div>
-    {{/if}}
-  {{/if}}
-
-  {{! Start of Community IP Display }}
-  {{#if (eq details.apiService "community")}}
+  {{! IP Display }}
+  {{#if (eq details.apiService "unified")}}
     {{#if details.limitHit}}
       <h1 class="p-title">{{fa-icon icon="info" fixedWidth=true}} Community API Limit Hit</h1>
       {{#if details.usingApiKey}}
@@ -588,118 +16,589 @@
         </div>
       {{/if}}
     {{else}}
-
-      {{#if details.ip}}
+      {{#if (eq block.entity.type "IPv4")}}
         <div>
-          <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">Pivot To GreyNoise Visualizer
-            {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
-        </div>
-      {{/if}}
-      <div id={{concat "community-container-" uniqueIdPrefix}}>
-        <span class="p-title">{{fa-icon "clipboard" fixedWidth=true}} GreyNoise Community Summary</span>
-        <div class="mb-2">
-          {{#if (and details.riot (not details.noise))}}
-            <span>
-              The IP
-              <strong>{{block.entity.value}}</strong>
-              has not been observed scanning the internet by GreyNoise. It is part of the
-              <strong>RIOT</strong>
-              project, which identifies IPs from known benign services and organizations that commonly cause false
-              positives in network security and threat intelligence products.
-            </span>
-          {{else if details.riot}}
-            <span>
-              The IP
-              <strong>{{block.entity.value}}</strong>
-              is part of the
-              <strong>RIOT</strong>
-              project, which identifies IPs from known benign services and organizations that commonly cause false
-              positives in network security and threat intelligence products.
-            </span>
-          {{/if}}
-          {{#if details.noise}}
-            <div class="{{if details.riot 'mt-2'}}">
-              {{#if (eq details.classification "unknown")}}
-                The IP
-                {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}}
-                has an
-                <strong>unknown</strong>
-                classification
-              {{else}}
-                The IP
-                {{#if (not details.riot)}}<strong>{{block.entity.value}}</strong>{{/if}}
-                is classified as
-                <strong>{{details.classification}}</strong>
-              {{/if}}
-              {{#if details.noise}}
-                and was last observed scanning the GreyNoise sensor network on
-                <strong>{{details.last_seen}}</strong>.
-              {{else}}
-                and has not been observed scanning the GreyNoise sensor network.
-              {{/if}}
-              {{#if (eq details.classification "benign")}}
-                A benign classification means GreyNoise has identified the actor (<strong>{{details.name}}</strong>) to
-                be a legitimate company that is not malicious in nature.
-              {{/if}}
-              {{#if (eq details.classification "malicious")}}
-                GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
-                malicious tags associated with it. It is still considered Internet background noise since it is scanning
-                the entire Internet and NOT targeting you specifically.
-              {{/if}}
-              {{#if (eq details.classification "unknown")}}
-                GreyNoise classified the IP as unknown because it could not be classified as malicious or benign and has
-                unknown intent. It is still considered Internet background noise since it is scanning the entire
-                internet and NOT targeting you specifically.
-              {{/if}}
+          {{#if details.ip}}
+            <div>
+              <a href="https://viz.greynoise.io/ip/{{details.ip}}" class="p-link">Pivot To GreyNoise Visualizer
+                {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
             </div>
           {{/if}}
+          {{! Ex RIOT part - Business Service Intelligence }}
+          {{#if details.business_service_intelligence.found}}
+            <h1 class="p-title large">Business Service Intelligence</h1>
+            <div class="paged-container">
+              <div>
+                <span class="p-key"> Trust Level: </span>
+                <span class="p-value">{{trustLevel}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Category: </span>
+                <span class="p-value">{{details.business_service_intelligence.category}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Name: </span>
+                <span class="p-value">{{details.business_service_intelligence.name}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Description: </span>
+                <span class="p-value">{{details.business_service_intelligence.description}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Explanation: </span>
+                <span class="p-value">{{details.business_service_intelligence.explanation}}</span>
+              </div>
+              <div>
+                <span class="p-key"> Updated Date: </span>
+                <span class="p-value">{{moment-format
+                    details.business_service_intelligence.last_updated
+                    "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                  }}</span>
+              </div>
+              <div>
+                <span class="p-key"> Reference: </span>
+                <span class="p-value"><a
+                    href="{{details.business_service_intelligence.reference}}"
+                    class="p-link"
+                    target="_blank"
+                  >{{details.business_service_intelligence.reference}}</a></span>
+              </div>
+            </div>
+          {{/if}}
+          
+          {{! Ex NOISE part - Internet Scanner Intelligence }}
+          {{#if details.internet_scanner_intelligence.found}}
+            <h1 class="p-title large">Internet Scanner Intelligence</h1>
+            
+            {{!-- Context --}}
+            <div class="paged-container">
+            <h1 class="p-title mt-0">
+              Context Information
+            </h1>
+            {{#if details.internet_scanner_intelligence.classification}}
+              <div>
+                <span class="p-key">Classification: </span>
+                <span class="p-value classification {{details.internet_scanner_intelligence.classification}}">{{details.internet_scanner_intelligence.classification}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.metadata.organization}}
+              <div>
+                <span class="p-key">Organization: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.metadata.organization}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.actor}}
+              <div>
+                <span class="p-key">Actor: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.actor}}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.first_seen}}
+              <div>
+                <span class="p-key">First Seen: </span>
+                <span class="p-value">{{moment-format
+                        details.internet_scanner_intelligence.first_seen
+                        "YYYY-MM-DD"
+                }}</span>
+              </div>
+            {{/if}}
+            {{#if details.internet_scanner_intelligence.last_seen}}
+              <div>
+                <span class="p-key">Last Seen: </span>
+                <span class="p-value">{{moment-format
+                        details.internet_scanner_intelligence.last_seen
+                        "YYYY-MM-DD"
+                }}</span>
+              </div>
+            {{/if}}
+            <div class="info-bar my-1">
+              <div class="info-bar-row two-wide">
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Spoofable</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.spoofable}}Yes{{else}}No{{/if}}
+                  </span>
+                </div>
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Bot</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.bot}}Yes{{else}}No{{/if}}
+                  </span>
+                </div>
+              </div>
+              <div class="info-bar-row two-wide">
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">VPN</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.vpn}}
+                      Yes {{#if details.internet_scanner_intelligence.vpn_service}}({{details.internet_scanner_intelligence.vpn_service}}){{/if}}
+                    {{else}}
+                      No
+                    {{/if}}
+                  </span>
+                </div>
+                <div class="info-bar-pill">
+                  <span class="info-bar-key">Tor</span>
+                  <span class="info-bar-value">
+                    {{#if details.internet_scanner_intelligence.tor}}
+                      Yes
+                    {{else}}
+                      No
+                    {{/if}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            {{#if details.internet_scanner_intelligence.cves}}
+              <h2 class="p-title">CVEs ({{details.internet_scanner_intelligence.cves.length}})</h2>
+              <div class="p-scrollable-table">
+                <table class="p-table">
+                  <tbody>
+                  {{#each details.internet_scanner_intelligence.cves as |cve|}}
+                    <tr>
+                      <td>{{cve}}</td>
+                    </tr>
+                  {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            {{/if}}
+          </div>
+          
+            {{!-- Tags --}}
+            {{#if details.internet_scanner_intelligence.tags}}
+              <div class="paged-container">
+                <h1 class="p-title">
+                  Tags ({{details.internet_scanner_intelligence.tags.length}})
+                </h1>
+                {{!-- Beginning of Port Paging Header --}}
+                {{#if (gt details.internet_scanner_intelligence.tags.length 0)}}
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="pl-0 page-info p-footnote">
+                      {{#if (gt details.internet_scanner_intelligence.tags.length associationsPageSize)}}
+                        Viewing tags {{associationsStartItem}} - {{associationsEndItem}} of {{details.internet_scanner_intelligence.tags.length}}
+                      {{else}}
+                        Viewing {{details.internet_scanner_intelligence.tags.length}} search results
+                      {{/if}}
+                    </div>
+                  </div>
+                {{else}}
+                  <div class="p-footnote">
+                    No results found
+                  </div>
+                {{/if}}
+                {{!-- End of Paging Header --}}
+                {{#each pagedAssociations as |tag|}}
+                  <div class="tag-container">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        {{#if (eq tag.category "tool")}}
+                          {{fa-icon icon="hammer" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{else if (eq tag.category "activity")}}
+                          {{fa-icon icon="wave-triangle" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{else}}
+                          {{fa-icon icon="circle" fixedWidth=true class=(concat "tag-icon " tag.intention)}}
+                        {{/if}}
+                        <span class="ml-1">{{tag.name}}</span>
+                        {{#if tag.cves}}
+                          <div>
+                            <span class="p-value">
+                              {{#each tag.cves as |cve index|}}
+                                {{cve}}{{#if (not (eq (sub tag.cves.length 1) index))}}, {{/if}}
+                              {{/each}}
+                            </span>
+                          </div>
+                        {{/if}}
+                      </div>
+                      <div>
+                        <button class="btn icon-btn" {{action (toggle "__viewDetails" tag)}}>
+                          {{#if tag.__viewDetails}}
+                            {{fa-icon icon="chevron-up" fixedWidth=true class="p-grey"}}
+                          {{else}}
+                            {{fa-icon icon="chevron-down" fixedWidth=true class="p-grey"}}
+                          {{/if}}
+                        </button>
+                      </div>
+                    </div>
+                    {{#if tag.__viewDetails}}
+                      <div class="mt-1">
+                        <div>
+                          <span class="p-key">Description: </span>
+                          <span class="p-value">{{tag.description}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Category: </span>
+                          <span class="p-value">{{tag.category}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Intent: </span>
+                          <span class="p-value classification {{tag.intention}}">{{tag.intention}}</span>
+                        </div>
+                        <div>
+                          <span class="p-key">Recommended Block?: </span>
+                          <span class="p-value">{{#if tag.recommend_block}}Yes{{else}}No{{/if}}</span>
+                        </div>
+                      </div>
+                    {{/if}}
+                    
+                  </div>
+                {{/each}}
+                {{#if (gt details.internet_scanner_intelligence.tags.length associationsPageSize)}}
+                  <div class="paging-bar">
+                    <button
+                      class="btn paging-btn"
+                      {{action "firstAssociationsPage"}}
+                      disabled={{isPrevAssociationsButtonsDisabled}}
+                    >
+                      {{fa-icon icon="angle-double-left" fixedWidth=false}}
+                    </button>
+                    <button
+                      class="btn paging-btn"
+                      {{action "prevAssociationsPage"}}
+                      disabled={{isPrevAssociationsButtonsDisabled}}
+                    >
+                      {{fa-icon icon="angle-left" fixedWidth=false}}
+                    </button>
+                    <div class="paging-info">
+                      {{associationsStartItem}}
+                      -
+                      {{associationsEndItem}}
+                      of
+                      {{details.internet_scanner_intelligence.tags.length}}
+                    </div>
+                    <button
+                      class="btn paging-btn"
+                      {{action "nextAssociationsPage"}}
+                      disabled={{isNextAssociationsButtonDisabled}}
+                    >
+                      {{fa-icon icon="angle-right" fixedWidth=false}}
+                    </button>
+                    <button
+                      class="btn paging-btn"
+                      {{action "lastAssociationsPage"}}
+                      disabled={{isNextAssociationsButtonDisabled}}
+                    >
+                      {{fa-icon icon="angle-double-right" fixedWidth=false}}
+                    </button>
+                  </div>
+                {{/if}}
+              </div>
+            {{/if}}
+            {{!-- Metadata --}}
+            <div class="paged-container">
+              <h1 class="p-title">
+                Metadata
+              </h1>
+              {{#if details.internet_scanner_intelligence.metadata.asn}}
+                <div>
+                  <span class="p-key">ASN: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.asn}}</span>
+                </div>
+              {{/if}}
+              <div>
+                <span class="p-key">Mobile: </span>
+                <span class="p-value">{{details.internet_scanner_intelligence.metadata.mobile}}</span>
+              </div>
+              {{#if details.internet_scanner_intelligence.metadata.source_country}}
+                <div>
+                  <span class="p-key">Source Country: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.source_country}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.source_country_code}}
+                <div>
+                  <span class="p-key">Source Country Code: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.source_country_code}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.source_city}}
+                <div>
+                  <span class="p-key">Source City: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.source_city}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.domain}}
+                <div>
+                  <span class="p-key">Domain: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.domain}}</span>
+                </div>
+              {{/if}}
+              
+              {{#if details.internet_scanner_intelligence.metadata.category}}
+                <div>
+                  <span class="p-key">Category: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.category}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.rdns}}
+                <div>
+                  <span class="p-key">RDNS: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.rdns}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.sensor_count}}
+                <div>
+                  <span class="p-key">Sensor Count: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.sensor_count}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.sensor_hits}}
+                <div>
+                  <span class="p-key">Sensor Hits: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.sensor_hits}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.region}}
+                <div>
+                  <span class="p-key">Region: </span>
+                  <span class="p-value">{{details.internet_scanner_intelligence.metadata.region}}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.last_seen_timestamp}}
+                <div>
+                  <span class="p-key">Last Seen Timestamp: </span>
+                  <span class="p-value">
+                    {{moment-format
+                      details.internet_scanner_intelligence.last_seen_timestamp
+                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                    }}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.last_seen_malicious}}
+                <div>
+                  <span class="p-key">Last Seen Malicious: </span>
+                  <span class="p-value">{{moment-format
+                      details.internet_scanner_intelligence.last_seen_malicious
+                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                    }}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.last_seen_suspicious}}
+                <div>
+                  <span class="p-key">Last Seen Suspicious: </span>
+                  <span class="p-value">{{moment-format
+                      details.internet_scanner_intelligence.last_seen_suspicious
+                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                    }}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.last_seen_benign}}
+                <div>
+                  <span class="p-key">Last Seen Benign: </span>
+                  <span class="p-value">{{moment-format
+                      details.internet_scanner_intelligence.last_seen_benign
+                      "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                    }}</span>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.metadata.destination_countries}}
+                <h2 class="p-title">Destination Countries ({{details.internet_scanner_intelligence.metadata.destination_countries.length}})</h2>
+                <div class="p-scrollable-table">
+                  <table class="p-table">
+                    <tbody>
+                      {{#each details.internet_scanner_intelligence.metadata.destination_countries as |country|}}
+                        <tr>
+                          <td>{{country}}</td>
+                        </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                </div>
+              {{/if}}
+              {{#if details.internet_scanner_intelligence.raw_data.scan}}
+                <h2 class="p-title d-flex align-items-center justify-content-between">
+                  <div>
+                    Port & Protocol ({{details.internet_scanner_intelligence.raw_data.scan.length}})
+                  </div>
+                  <div {{action (toggle "__viewPortFilter" this)}} class="p-action">
+                    {{#if __viewPortFilter}}
+                      Hide port filter {{fa-icon icon="chevron-up" fixedWidth=true}}
+                    {{else}}
+                      View port filter {{fa-icon icon="chevron-down" fixedWidth=true}}
+                    {{/if}}
+                  </div>
+                </h2>
+                {{!-- Begining of Data Filter --}}
+                {{#if __viewPortFilter}}
+                  <div class="input-container">
+                  <label class="small ifta-label">
+                    Filter by Port or Protocol
+                  </label>
+                  {{input
+                    class=(concat "ifta-field mb-1" (if uiElement.error " error"))
+                    value=portFilterValue
+                    placeholder="Filter ports"
+                    disabled=false
+                    required=false
+                  }}
+                  {{#if (gt portFilterValue.length 0)}}
+                    <span {{action (mut portFilterValue "")}}>
+                      {{fa-icon icon="times-circle" fixedWidth=true class="clear-input-icon"}}
+                    </span>
+                  {{/if}}
+                </div>
+                {{/if}}
+                {{!-- End of Data Filter --}}
+                {{!-- Beginning of Port Paging Header --}}
+                {{#if (gt portFilteredData.length 0)}}
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="pl-0 page-info p-footnote">
+                      {{#if (gt portFilteredData.length portPageSize)}}
+                        Viewing ports {{portPagingStartItem}} - {{portPagingEndItem}} of {{portFilteredData.length}}
+                      {{else}}
+                        Viewing {{portFilteredData.length}} search results
+                      {{/if}}
+                    </div>
+                  </div>
+                {{else}}
+                  <div class="p-footnote">
+                    No results found
+                  </div>
+                {{/if}}
+                {{!-- End of Paging Header --}}               
+                <table class="p-table">
+                  <tbody>
+                    {{#each portFilteredPagingData as |scan|}}
+                      <tr>
+                        <td>{{scan.port}}</td>
+                        <td>{{scan.protocol}}</td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              {{/if}}
+              {{!-- Port Result Paging component --}}
+              {{#if (gt portFilteredData.length portPageSize)}}
+                <div class="paging-bar mt-1">
+                  <div class="d-flex align-items-center">
+                    <button class="btn paging-btn" {{action "portFirstPage"}} disabled={{portIsPrevButtonsDisabled}}>
+                      {{fa-icon icon="angle-double-left" fixedWidth=false}}
+                    </button>
+                    <button class="btn paging-btn" {{action "portPrevPage"}} disabled={{portIsPrevButtonsDisabled}}>
+                      {{fa-icon icon="angle-left" fixedWidth=false}}
+                    </button>
+                    <div class="paging-info">
+                      {{#if (eq portPageSize 1)}}
+                        {{portPagingStartItem}} of {{portFilteredData.length}}
+                      {{else}}
+                        {{portPagingStartItem}} - {{portPagingEndItem}} of {{portFilteredData.length}}
+                      {{/if}}
+                    </div>
+                    <button class="btn paging-btn" {{action "portNextPage"}} disabled={{portIsNextButtonDisabled}}>
+                      {{fa-icon icon="angle-right" fixedWidth=false}}
+                    </button>
+                    <button class="btn paging-btn" {{action "portLastPage"}} disabled={{portIsNextButtonDisabled}}>
+                      {{fa-icon icon="angle-double-right" fixedWidth=false}}
+                    </button>
+                  </div>
+                </div>
+              {{/if}}
+              {{!-- End of Port Paging Component --}}
+            </div>
+            {{!-- End of metadata --}}
+            
+          {{/if}}
+
+          <div class="paged-container">
+            <div id={{concat "community-container-" uniqueIdPrefix}}>
+              <h1 class="p-title">GreyNoise Summary</h1>
+              <div class="mb-2">
+                {{#if details.business_service_intelligence.found}}
+                  <span>
+                    The IP
+                    <strong>{{block.entity.value}}</strong>
+                    has not been observed scanning the internet by GreyNoise. It is part of the
+                    <strong>RIOT</strong>
+                    project, which identifies IPs from known benign services and organizations that commonly cause false
+                    positives in network security and threat intelligence products. The collection of IPs in RIOT is
+                    continually curated and verified to provide accurate results.
+                  </span>
+                {{/if}}
+                {{#if details.internet_scanner_intelligence.found}}
+                  <div class="{{if details.business_service_intelligence.found 'mt-2'}}">
+                    {{#if (eq details.internet_scanner_intelligence.classification "benign")}}
+                      A benign classification from GreyNoise indicates this IP belongs to a legitimate company, 
+                      search engine, security research organization, university, or individual and that the actor is trustworthy.
+                      Additionally, the actors' website includes some kind of opt-out functionality
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "malicious")}}
+                      GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
+                      malicious tags associated with it. It is still considered Internet background noise since it is
+                      scanning the entire Internet and not necessarily targeting you specifically.
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "suspicious")}}
+                      Greynoise classified the IP as suspicious indicating activity that lies between clearly malicious and benign behavior. 
+                      This activity involves systematic probing or enumeration, distinguishing it from random internet background noise. 
+                      This classification serves as contextual intelligence rather than an immediate call to action.
+                    {{/if}}
+                    {{#if (eq details.internet_scanner_intelligence.classification "unknown")}}
+                      GreyNoise classified the IP as unknown because it could not be classified as malicious, suspicious, or benign and
+                      has unknown intent. It is still considered Internet background noise since it is scanning the entire
+                      internet and not necessarily targeting you specifically.
+                    {{/if}}
+                  </div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 class="p-title">
-          {{fa-icon "eye" fixedWidth=true}}
-          Context Information
-        </h1>
-        {{#if details.noise}}
+      {{/if}}
+
+      {{! CVE Information }}
+      {{#if (eq block.entity.type "cve")}}
+        <div class="asset-container">
+          <h1 class="p-title large">Common Vulnerabilities and Exposures</h1>
+          <h1 class="p-title">
+            Context Information
+          </h1>
           <div>
-            <span class="p-key"> Internet Scanner: </span>
-            <span class="p-value">{{details.noise}}</span>
+            <span class="p-key">Description:</span>
+            <span class="p-value">{{details.details.vulnerability_description}}</span>
           </div>
-        {{/if}}
-        {{#if details.riot}}
           <div>
-            <span class="p-key">RIOT: </span>
-            <span class="p-value">{{details.riot}}</span>
+            <span class="p-key">CVSS Score:</span>
+            <span class="p-value">{{details.details.cve_cvss_score}}</span>
           </div>
-        {{/if}}
-        {{#if details.classification}}
           <div>
-            <span class="p-key">Classification: </span>
-            <span class="p-value">{{details.classification}}</span>
+            <span class="p-key">EPSS Score:</span>
+            <span class="p-value">{{details.exploitation_details.epss_score}}</span>
           </div>
-        {{/if}}
-        {{#if details.name}}
           <div>
-            <span class="p-key">{{#if details.riot}}Provider{{else}}Actor{{/if}}: </span>
-            <span class="p-value">{{details.name}}</span>
+            <span class="p-key">Attack Vector:</span>
+            <span class="p-value">{{#if
+                details.exploitation_details.attack_vector
+              }}{{details.exploitation_details.attack_vector}}{{else}}Unknown{{/if}}</span>
           </div>
-        {{/if}}
-        {{#if details.last_seen}}
           <div>
-            <span class="p-key">Last Seen: </span>
-            <span class="p-value">{{details.last_seen}}</span>
+            <span class="p-key">Published to NVD:</span>
+            <span class="p-value">{{details.details.published_to_nist_nvd}}</span>
           </div>
-        {{/if}}
-        {{#unless details.usingApiKey}}
-          <div class="api-call-to-action alert alert-info">
-            {{fa-icon icon="gift" fixedWidth=true}}
-            <a href="https://viz.greynoise.io/signup">
-              Activate your free 14-day trial of GreyNoise. You'll have full API access and Visualizer features during
-              the trial.
-              {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
+          <h1 class="p-title">
+            Timeline
+          </h1>
+          <div>
+            <span class="p-key">Published:</span>
+            <span class="p-value">{{moment-format
+                details.timeline.cve_published_date
+                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+              }}</span>
           </div>
-        {{/unless}}
-      </div>
+          <div>
+            <span class="p-key">Last Modified:</span>
+            <span class="p-value">{{moment-format
+                details.timeline.cve_last_updated_date
+                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+              }}</span>
+          </div>
+        </div>
+      {{/if}}
     {{/if}}
   {{/if}}
 {{else}}
-  <span>IP address has not been seen.</span>
+  {{#if (eq block.entity.type "IPv4")}}
+    <span>IP address has not been seen.</span>
+  {{else if (eq block.entity.type "cve")}}
+    <span>CVE has not been seen.</span>
+  {{/if}}
 {{/if}}

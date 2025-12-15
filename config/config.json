@@ -3,13 +3,9 @@
   "name": "GreyNoise",
   "acronym": "GN",
   "description": "GreyNoise Intelligence is a cyber security company that collects, labels, and analyzes Internet-wide scan and attack data",
-  "entityTypes": [
-    "IPv4",
-    "cve"
-  ],
-  "styles": [
-    "./styles/gn.less"
-  ],
+  "dataTypes": ["IPv4", "cve"],
+  "entityTypes": ["IPv4", "cve"],
+  "styles": ["./styles/gn.less"],
   "block": {
     "component": {
       "file": "./components/gn-block.js"
@@ -53,17 +49,8 @@
       "description": "Account API key used to access GreyNoise API.",
       "default": "",
       "type": "password",
-      "userCanEdit": true,
-      "adminOnly": false
-    },
-    {
-      "key": "subscriptionApi",
-      "name": "Search using the Subscription API",
-      "description": "If checked, the integration will search using the GreyNoise Subscription Based APIs.  When unchecked, the GreyNoise Community API will be used (only supports IP lookups)",
-      "default": false,
-      "type": "boolean",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "ignoreNonSeen",
@@ -71,8 +58,8 @@
       "description": "If checked, IPs that have not been seen by GreyNoise will not be displayed in the Polarity Overlay window.",
       "default": false,
       "type": "boolean",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     }
   ]
 }
