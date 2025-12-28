@@ -433,11 +433,11 @@
                 </div>
               {{/if}}
               {{#if details.internet_scanner_intelligence.metadata.destination_countries}}
-                <h2 class="p-title">Destination Countries ({{details.internet_scanner_intelligence.metadata.destination_countries.length}})</h2>
+                <h2 class="p-title">Destination Countries ({{destinationCountriesAlphabetical.length}})</h2>
                 <div class="p-scrollable-table">
                   <table class="p-table">
                     <tbody>
-                      {{#each details.internet_scanner_intelligence.metadata.destination_countries as |country|}}
+                      {{#each destinationCountriesAlphabetical as |country|}}
                         <tr>
                           <td>{{country}}</td>
                         </tr>
