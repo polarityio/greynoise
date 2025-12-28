@@ -570,6 +570,65 @@
             <span class="p-key">Published to NVD:</span>
             <span class="p-value">{{details.details.published_to_nist_nvd}}</span>
           </div>
+          <h1 class="p-title">Exploitation Stats</h1>
+          <div>
+            <span class="p-key">Number of available exploits:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_available_exploits}}</span>
+          </div>
+          <div>
+            <span class="p-key">Number of threat actors exploiting vulnerability:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_threat_actors_exploiting_vulnerability}}</span>
+          </div>
+          <div>
+            <span class="p-key">Number of botnets exploiting vulnerability:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_botnets_exploiting_vulnerability}}</span>
+          </div>
+          <h1 class="p-title">Benign IP Count</h1>
+          <div class="info-bar">
+            <div class="info-bar-row">
+              <div class="info-bar-pill">
+                <span class="info-bar-key">1 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_1d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">10 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_10d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">30 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_30d}}
+                </span>
+              </div>
+            </div>
+          </div>
+          <h1 class="p-title">Threat IP Count</h1>
+          <div class="info-bar">
+            <div class="info-bar-row">
+              <div class="info-bar-pill">
+                <span class="info-bar-key">1 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_1d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">10 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_10d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">30 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_30d}}
+                </span>
+              </div>
+            </div>
+          </div>
           <h1 class="p-title">
             Timeline
           </h1>
