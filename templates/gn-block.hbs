@@ -552,6 +552,18 @@
             <span class="p-key">Description:</span>
             <span class="p-value">{{details.details.vulnerability_description}}</span>
           </div>
+          {{#if details.details.product}}
+            <div>
+              <span class="p-key">Product:</span>
+              <span class="p-value">{{details.details.product}}</span>
+            </div>
+          {{/if}}
+          {{#if details.details.vendor}}
+            <div>
+              <span class="p-key">Vendor:</span>
+              <span class="p-value">{{details.details.vendor}}</span>
+            </div>
+          {{/if}}
           <div>
             <span class="p-key">CVSS Score:</span>
             <span class="p-value">{{details.details.cve_cvss_score}}</span>
@@ -636,16 +648,34 @@
             <span class="p-key">Published:</span>
             <span class="p-value">{{moment-format
                 details.timeline.cve_published_date
-                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                "YYYY-MM-DD HH:mm:ss z"
               }}</span>
           </div>
           <div>
             <span class="p-key">Last Modified:</span>
             <span class="p-value">{{moment-format
                 details.timeline.cve_last_updated_date
-                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                "YYYY-MM-DD HH:mm:ss z"
               }}</span>
           </div>
+          {{#if details.timeline.first_known_published_date}}
+            <div>
+              <span class="p-key">First known published:</span>
+              <span class="p-value">{{moment-format
+                      details.timeline.first_known_published_date
+                      "YYYY-MM-DD HH:mm:ss z"
+              }}</span>
+            </div>
+          {{/if}}
+          {{#if details.timeline.cisa_kev_date_added}}
+            <div>
+              <span class="p-key">Added to CISA Known Exploited Vulnerabilities:</span>
+              <span class="p-value">{{moment-format
+                      details.timeline.cisa_kev_date_added
+                      "YYYY-MM-DD HH:mm:ss z"
+              }}</span>
+            </div>
+          {{/if}}
         </div>
       {{/if}}
     {{/if}}
