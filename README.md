@@ -1,5 +1,5 @@
 # Polarity GreyNoise Integration
-The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan and attack activity related to indicators on your screen.  The scan and attack activity is then displayed via the Polarity Overlay Window, and we support the GreyNoise Community API out of the box if you do not already have an Enterpise API Key.
+The Polarity - GreyNoise integration searches IPs in GreyNoise for internet scan and attack activity related to indicators on your screen.  The scan and attack activity is then displayed via the Polarity Overlay Window.
 
 Sign up for a free GreyNoise Community API key here https://viz.greynoise.io/signup
 
@@ -25,10 +25,6 @@ The base URL to the GreyNoise API you wish to use. Defaults to `https://api.grey
 
 ### API Key
 Account API key used to access GreyNoise API.
-
-### Search using the Subscription API
-
-If checked, the integration will search using the GreyNoise Subscription Based APIs. When unchecked, the GreyNoise Community API will be used (only supports IP lookups)
 
 ### Ignore IPs that have not been seen
 
