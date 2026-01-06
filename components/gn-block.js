@@ -13,6 +13,10 @@ polarity.export = PolarityComponent.extend({
     }
     return trustLevel;
   }),
+  destinationCountriesAlphabetical: Ember.computed('details.internet_scanner_intelligence.metadata.destination_countries', function(){
+    const countries = this.get('details.internet_scanner_intelligence.metadata.destination_countries');
+    return countries ? countries.sort() : [];
+  }),
   showAllTags: false,
   showCopyMessage: false,
   maxInitialTagsToShow: 15,

@@ -24,39 +24,46 @@
                 {{fa-icon icon="external-link-square" class="external-link-icon" fixedWidth=true}}</a>
             </div>
           {{/if}}
-          {{! Ex RIOT part - Business Service Intelligence }}
+          {{! Business Service Intelligence }}
           {{#if details.business_service_intelligence.found}}
             <h1 class="p-title large">Business Service Intelligence</h1>
             <div class="paged-container">
+              <div class="d-flex align-items-center justify-content-between">
+                <h1 class="p-title">Identified Business Service</h1>
+                <div>
+                  {{fa-icon icon="info-circle" fixedWidth=true}}
+                  {{bs-tooltip title=(concat "The IP " block.entity.value " is part of an Identified Business Service which includes IPs from known benign services and organizations that commonly cause false positives in network security and threat intelligence products. The collection of IPs is continually curated and verified to provide accurate results.")}}
+                </div>
+              </div>
               <div>
-                <span class="p-key"> Trust Level: </span>
+                <span class="p-key">Trust Level: </span>
                 <span class="p-value">{{trustLevel}}</span>
               </div>
               <div>
-                <span class="p-key"> Category: </span>
+                <span class="p-key">Category: </span>
                 <span class="p-value">{{details.business_service_intelligence.category}}</span>
               </div>
               <div>
-                <span class="p-key"> Name: </span>
+                <span class="p-key">Name: </span>
                 <span class="p-value">{{details.business_service_intelligence.name}}</span>
               </div>
               <div>
-                <span class="p-key"> Description: </span>
+                <span class="p-key">Description: </span>
                 <span class="p-value">{{details.business_service_intelligence.description}}</span>
               </div>
               <div>
-                <span class="p-key"> Explanation: </span>
+                <span class="p-key">Explanation: </span>
                 <span class="p-value">{{details.business_service_intelligence.explanation}}</span>
               </div>
               <div>
-                <span class="p-key"> Updated Date: </span>
+                <span class="p-key">Updated Date: </span>
                 <span class="p-value">{{moment-format
                     details.business_service_intelligence.last_updated
                     "ddd, DD MMM YYYY HH:mm:ss [GMT]"
                   }}</span>
               </div>
               <div>
-                <span class="p-key"> Reference: </span>
+                <span class="p-key">Reference: </span>
                 <span class="p-value"><a
                     href="{{details.business_service_intelligence.reference}}"
                     class="p-link"
@@ -76,9 +83,42 @@
               Context Information
             </h1>
             {{#if details.internet_scanner_intelligence.classification}}
+              <div class="d-flex align-items-center justify-content-between">
               <div>
                 <span class="p-key">Classification: </span>
                 <span class="p-value classification {{details.internet_scanner_intelligence.classification}}">{{details.internet_scanner_intelligence.classification}}</span>
+              </div>
+              <div>
+                {{fa-icon icon="info-circle" fixedWidth=true}}
+                  {{#if (eq details.internet_scanner_intelligence.classification "benign")}}
+                    {{bs-tooltip 
+                      title="A benign classification from GreyNoise indicates this IP belongs to a legitimate company, 
+                      search engine, security research organization, university, or individual and that the actor is trustworthy.
+                      Additionally, the actors' website includes some kind of opt-out functionality."
+                    }}
+                  {{/if}}
+                  {{#if (eq details.internet_scanner_intelligence.classification "malicious")}}
+                    {{bs-tooltip
+                      title="GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
+                      malicious tags associated with it. It is still considered Internet background noise since it is
+                      scanning the entire Internet and not necessarily targeting you specifically."
+                    }}
+                  {{/if}}
+                  {{#if (eq details.internet_scanner_intelligence.classification "suspicious")}}
+                    {{bs-tooltip 
+                      title="Greynoise classified the IP as suspicious indicating activity that lies between clearly malicious and benign behavior.
+                      This activity involves systematic probing or enumeration, distinguishing it from random internet background noise.
+                      This classification serves as contextual intelligence rather than an immediate call to action."
+                    }}
+                  {{/if}}
+                  {{#if (eq details.internet_scanner_intelligence.classification "unknown")}}
+                    {{bs-tooltip
+                      title="GreyNoise classified the IP as unknown because it could not be classified as malicious, suspicious, or benign and
+                      has unknown intent. It is still considered Internet background noise since it is scanning the entire
+                      internet and not necessarily targeting you specifically."
+                    }}
+                  {{/if}}
+              </div>
               </div>
             {{/if}}
             {{#if details.internet_scanner_intelligence.metadata.organization}}
@@ -393,11 +433,11 @@
                 </div>
               {{/if}}
               {{#if details.internet_scanner_intelligence.metadata.destination_countries}}
-                <h2 class="p-title">Destination Countries ({{details.internet_scanner_intelligence.metadata.destination_countries.length}})</h2>
+                <h2 class="p-title">Destination Countries ({{destinationCountriesAlphabetical.length}})</h2>
                 <div class="p-scrollable-table">
                   <table class="p-table">
                     <tbody>
-                      {{#each details.internet_scanner_intelligence.metadata.destination_countries as |country|}}
+                      {{#each destinationCountriesAlphabetical as |country|}}
                         <tr>
                           <td>{{country}}</td>
                         </tr>
@@ -497,51 +537,7 @@
               {{!-- End of Port Paging Component --}}
             </div>
             {{!-- End of metadata --}}
-            
           {{/if}}
-
-          <div class="paged-container">
-            <div id={{concat "community-container-" uniqueIdPrefix}}>
-              <h1 class="p-title">GreyNoise Summary</h1>
-              <div class="mb-2">
-                {{#if details.business_service_intelligence.found}}
-                  <span>
-                    The IP
-                    <strong>{{block.entity.value}}</strong>
-                    has not been observed scanning the internet by GreyNoise. It is part of the
-                    <strong>RIOT</strong>
-                    project, which identifies IPs from known benign services and organizations that commonly cause false
-                    positives in network security and threat intelligence products. The collection of IPs in RIOT is
-                    continually curated and verified to provide accurate results.
-                  </span>
-                {{/if}}
-                {{#if details.internet_scanner_intelligence.found}}
-                  <div class="{{if details.business_service_intelligence.found 'mt-2'}}">
-                    {{#if (eq details.internet_scanner_intelligence.classification "benign")}}
-                      A benign classification from GreyNoise indicates this IP belongs to a legitimate company, 
-                      search engine, security research organization, university, or individual and that the actor is trustworthy.
-                      Additionally, the actors' website includes some kind of opt-out functionality
-                    {{/if}}
-                    {{#if (eq details.internet_scanner_intelligence.classification "malicious")}}
-                      GreyNoise classified the IP as malicious because it is not classified as benign and has one or more
-                      malicious tags associated with it. It is still considered Internet background noise since it is
-                      scanning the entire Internet and not necessarily targeting you specifically.
-                    {{/if}}
-                    {{#if (eq details.internet_scanner_intelligence.classification "suspicious")}}
-                      Greynoise classified the IP as suspicious indicating activity that lies between clearly malicious and benign behavior. 
-                      This activity involves systematic probing or enumeration, distinguishing it from random internet background noise. 
-                      This classification serves as contextual intelligence rather than an immediate call to action.
-                    {{/if}}
-                    {{#if (eq details.internet_scanner_intelligence.classification "unknown")}}
-                      GreyNoise classified the IP as unknown because it could not be classified as malicious, suspicious, or benign and
-                      has unknown intent. It is still considered Internet background noise since it is scanning the entire
-                      internet and not necessarily targeting you specifically.
-                    {{/if}}
-                  </div>
-                {{/if}}
-              </div>
-            </div>
-          </div>
         </div>
       {{/if}}
 
@@ -556,6 +552,18 @@
             <span class="p-key">Description:</span>
             <span class="p-value">{{details.details.vulnerability_description}}</span>
           </div>
+          {{#if details.details.product}}
+            <div>
+              <span class="p-key">Product:</span>
+              <span class="p-value">{{details.details.product}}</span>
+            </div>
+          {{/if}}
+          {{#if details.details.vendor}}
+            <div>
+              <span class="p-key">Vendor:</span>
+              <span class="p-value">{{details.details.vendor}}</span>
+            </div>
+          {{/if}}
           <div>
             <span class="p-key">CVSS Score:</span>
             <span class="p-value">{{details.details.cve_cvss_score}}</span>
@@ -574,6 +582,65 @@
             <span class="p-key">Published to NVD:</span>
             <span class="p-value">{{details.details.published_to_nist_nvd}}</span>
           </div>
+          <h1 class="p-title">Exploitation Stats</h1>
+          <div>
+            <span class="p-key">Number of available exploits:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_available_exploits}}</span>
+          </div>
+          <div>
+            <span class="p-key">Number of threat actors exploiting vulnerability:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_threat_actors_exploiting_vulnerability}}</span>
+          </div>
+          <div>
+            <span class="p-key">Number of botnets exploiting vulnerability:</span>
+            <span class="p-value">{{details.exploitation_stats.number_of_botnets_exploiting_vulnerability}}</span>
+          </div>
+          <h1 class="p-title">Benign IP Count</h1>
+          <div class="info-bar">
+            <div class="info-bar-row">
+              <div class="info-bar-pill">
+                <span class="info-bar-key">1 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_1d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">10 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_10d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">30 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.benign_ip_count_30d}}
+                </span>
+              </div>
+            </div>
+          </div>
+          <h1 class="p-title">Threat IP Count</h1>
+          <div class="info-bar">
+            <div class="info-bar-row">
+              <div class="info-bar-pill">
+                <span class="info-bar-key">1 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_1d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">10 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_10d}}
+                </span>
+              </div>
+              <div class="info-bar-pill">
+                <span class="info-bar-key">30 day</span>
+                <span class="info-bar-value">
+                  {{details.exploitation_activity.threat_ip_count_30d}}
+                </span>
+              </div>
+            </div>
+          </div>
           <h1 class="p-title">
             Timeline
           </h1>
@@ -581,16 +648,34 @@
             <span class="p-key">Published:</span>
             <span class="p-value">{{moment-format
                 details.timeline.cve_published_date
-                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                "YYYY-MM-DD HH:mm:ss z"
               }}</span>
           </div>
           <div>
             <span class="p-key">Last Modified:</span>
             <span class="p-value">{{moment-format
                 details.timeline.cve_last_updated_date
-                "ddd, DD MMM YYYY HH:mm:ss [GMT]"
+                "YYYY-MM-DD HH:mm:ss z"
               }}</span>
           </div>
+          {{#if details.timeline.first_known_published_date}}
+            <div>
+              <span class="p-key">First known published:</span>
+              <span class="p-value">{{moment-format
+                      details.timeline.first_known_published_date
+                      "YYYY-MM-DD HH:mm:ss z"
+              }}</span>
+            </div>
+          {{/if}}
+          {{#if details.timeline.cisa_kev_date_added}}
+            <div>
+              <span class="p-key">Added to CISA Known Exploited Vulnerabilities:</span>
+              <span class="p-value">{{moment-format
+                      details.timeline.cisa_kev_date_added
+                      "YYYY-MM-DD HH:mm:ss z"
+              }}</span>
+            </div>
+          {{/if}}
         </div>
       {{/if}}
     {{/if}}
