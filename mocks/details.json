@@ -1,0 +1,89 @@
+{
+  "ip": "8.8.8.8",
+  "business_service_intelligence": {
+    "found": true,
+    "category": "Public DNS Service",
+    "description": "Google Public DNS is a Domain Name System (DNS) service offered to Internet users worldwide by Google. It functions as a recursive name server.",
+    "name": "Google Public DNS",
+    "trust_level": "1",
+    "last_updated": "2024-01-15T10:30:00Z",
+    "explanation": "Google Public DNS provides a free alternative DNS resolution service to users worldwide.",
+    "reference": "https://developers.google.com/speed/public-dns"
+  },
+  "internet_scanner_intelligence": {
+    "found": true,
+    "classification": "benign",
+    "actor": "Google LLC",
+    "bot": false,
+    "vpn": false,
+    "vpn_service": null,
+    "tor": false,
+    "spoofable": false,
+    "first_seen": "2020-01-10",
+    "last_seen": "2024-01-16",
+    "last_seen_timestamp": "2024-01-16T03:45:00Z",
+    "last_seen_benign": "2024-01-16T03:45:00Z",
+    "last_seen_malicious": null,
+    "last_seen_suspicious": null,
+    "metadata": {
+      "asn": "AS15169",
+      "organization": "Google LLC",
+      "source_country": "United States",
+      "source_country_code": "US",
+      "source_city": "Mountain View",
+      "region": "California",
+      "category": "isp",
+      "rdns": "dns.google",
+      "domain": "google.com",
+      "sensor_count": 250,
+      "sensor_hits": 15000,
+      "mobile": false,
+      "destination_countries": ["US", "CA", "GB", "DE", "FR", "JP", "AU"]
+    },
+    "tags": [
+      {
+        "name": "DNS Scanner",
+        "category": "tool",
+        "intention": "benign",
+        "description": "IP is scanning for DNS services",
+        "recommend_block": false,
+        "cves": []
+      },
+      {
+        "name": "Web Crawler",
+        "category": "activity",
+        "intention": "benign",
+        "description": "IP is performing web crawling activities",
+        "recommend_block": false,
+        "cves": []
+      }
+    ],
+    "cves": [],
+    "raw_data": {
+      "scan": [
+        {"port": 53, "protocol": "UDP"},
+        {"port": 443, "protocol": "TCP"},
+        {"port": 80, "protocol": "TCP"}
+      ]
+    }
+  },
+  "apiService": "unified",
+  "hasResult": true,
+  "usingApiKey": true,
+  "stats": {
+    "destination_countries": [
+      {"country": "United States", "count": 5000},
+      {"country": "Canada", "count": 1500}
+    ],
+    "organizations": [
+      {"organization": "Google", "count": 10000}
+    ],
+    "tags": [
+      {
+        "tag": "DNS Scanner",
+        "count": 8000,
+        "internal_metadata": "should_not_appear"
+      }
+    ]
+  }
+}

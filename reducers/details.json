@@ -1,0 +1,41 @@
+{
+  "root": {
+    "path": "",
+    "on_null": "return_empty"
+  },
+  "pipeline": [
+    {
+      "op": "copy",
+      "from": "business_service_intelligence.category",
+      "to": "reduced_results.business_service_intelligence_category"
+    },
+    {
+      "op": "copy",
+      "from": "business_service_intelligence.description",
+      "to": "reduced_results.business_service_intelligence_description"
+    },
+    {
+      "op": "copy",
+      "from": "business_service_intelligence.last_updated",
+      "to": "reduced_results.business_service_intelligence_last_updated"
+    },
+    {
+      "op": "copy",
+      "from": "internet_scanner_intelligence.classification",
+      "to": "reduced_results.internet_scanner_intelligence_classification"
+    },
+    {
+      "op": "copy",
+      "from": "internet_scanner_intelligence.metadata.organization",
+      "to": "reduced_results.internet_scanner_intelligence_metadata_organization"
+    },
+    {
+      "op": "prune",
+      "strategy": "empty_values",
+      "target": "reduced_results"
+    }
+  ],
+  "output": {
+    "result": "$working.reduced_results"
+  }
+}

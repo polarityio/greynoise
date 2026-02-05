@@ -3,9 +3,17 @@
   "name": "GreyNoise",
   "acronym": "GN",
   "description": "GreyNoise Intelligence is a cyber security company that collects, labels, and analyzes Internet-wide scan and attack data",
-  "dataTypes": ["IPv4", "cve"],
-  "entityTypes": ["IPv4", "cve"],
-  "styles": ["./styles/gn.less"],
+  "dataTypes": [
+    "IPv4",
+    "cve"
+  ],
+  "entityTypes": [
+    "IPv4",
+    "cve"
+  ],
+  "styles": [
+    "./styles/gn.less"
+  ],
   "block": {
     "component": {
       "file": "./components/gn-block.js"
@@ -61,5 +69,10 @@
       "userCanEdit": false,
       "adminOnly": true
     }
-  ]
+  ],
+  "reducer": {
+    "details": {
+      "file": "./reducers/details.json"
+    }
+  }
 }
